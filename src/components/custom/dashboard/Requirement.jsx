@@ -1,0 +1,210 @@
+// import Banner from '@/Components/Banner/Banner';
+import ItemCard from "./ItemCard";
+// import { useCategoriesStore } from '@/zustand/getCategories';
+
+import { MoveRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/Components/ui/accordion";
+import { useCategory, useCategoryState } from "@/redux/hooks/useCategory";
+
+// const data = [
+//   {
+//     _id: "cat1",
+//     categoryName: "electronics",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub1", name: "mobile" },
+//       { _id: "sub2", name: "tablets" },
+//       { _id: "sub3", name: "wearables" },
+//       { _id: "sub4", name: "accessories" },
+//       { _id: "sub5", name: "other" },
+//     ],
+//   },
+//   {
+//     _id: "cat2",
+//     categoryName: "furniture",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub6", name: "sofa" },
+//       { _id: "sub7", name: "beds" },
+//       { _id: "sub8", name: "tables" },
+//     ],
+//   },
+//   {
+//     _id: "cat3",
+//     categoryName: "industrial",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub9", name: "cement" },
+//       { _id: "sub10", name: "steel" },
+//       { _id: "sub11", name: "bricks" },
+//     ],
+//   },
+//   {
+//     _id: "cat4",
+//     categoryName: "home",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       {
+//         _id: "sub12",
+//         name: "kitchen appliances",
+//         subproducts: [{ name: "microwave" }, { name: "mixer grinder" }],
+//       },
+//       {
+//         _id: "sub13",
+//         name: "cleaning",
+//         subproducts: [{ name: "vacuum cleaner" }, { name: "mops" }],
+//       },
+//     ],
+//   },
+//   {
+//     _id: "cat5",
+//     categoryName: "beauty",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub14", name: "skincare" },
+//       { _id: "sub15", name: "haircare" },
+//     ],
+//   },
+//   {
+//     _id: "cat5",
+//     categoryName: "beauty",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub14", name: "skincare" },
+//       { _id: "sub15", name: "haircare" },
+//     ],
+//   },
+//   {
+//     _id: "cat5",
+//     categoryName: "beauty",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub14", name: "skincare" },
+//       { _id: "sub15", name: "haircare" },
+//     ],
+//   },
+//   {
+//     _id: "cat5",
+//     categoryName: "beauty",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub14", name: "skincare" },
+//       { _id: "sub15", name: "haircare" },
+//     ],
+//   },
+//   {
+//     _id: "cat5",
+//     categoryName: "beauty",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub14", name: "skincare" },
+//       { _id: "sub15", name: "haircare" },
+//     ],
+//   },
+//   {
+//     _id: "cat5",
+//     categoryName: "beauty",
+//     image: "https://picsum.photos/id/237/200/300",
+//     subCategories: [
+//       { _id: "sub14", name: "skincare" },
+//       { _id: "sub15", name: "haircare" },
+//     ],
+//   },
+// ];
+
+const Requirement = () => {
+  const disptachCategories = useCategory();
+  const {categories:data}= useCategoryState()
+  const [currentWinSize, setCurrentWinSize] = useState(window.innerWidth);
+  const navigate = useNavigate();
+  useEffect(() => {
+    disptachCategories();
+  }, []);
+  useEffect(() => {
+    const handleResize = () => {
+      setCurrentWinSize(window.innerWidth);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [window.innerWidth]);
+  return (
+    <div className="w-full max-w-7xl mx-auto px-4 min-h-screen relative">
+      {/* <Banner /> */}
+
+      <h1 className="text-xl font-bold te xt-gray-700 mt-10 mb-4">
+        Select a Category
+      </h1>
+      {currentWinSize >= 768 ? (
+        <div className="grid grid-cols-10 gap-5 ">
+          {data && data?.map((item) => <ItemCard key={item._id} {...item} />)}
+        </div>
+      ) : (
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+          defaultValue="item-1"
+        >
+          {data &&
+            data?.map((item) => (
+              <AccordionItem value={item?._id} key={item._id}>
+                <AccordionTrigger className="capitalize">
+                  <div className="flex items-center gap-x-4">
+                    <img src={item?.image} className="max-w-20 capitalize" />
+                    {item?.categoryName}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="flex flex-col gap-4 text-balance">
+                  <p className="list-disc list-inside space-y-2 pl-3">
+                    {item?.subCategories?.map((sub) => (
+                      <p
+                        onClick={() => {
+                         
+                          navigate(`/category/${item?._id}/${sub._id}`);
+                        }}
+                        key={sub?._id}
+                        className=" capitalize underline text-blue-500 text-md"
+                      >
+                       
+                      </p>
+                    ))}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+        </Accordion>
+      )}
+      {/* looking for div */}
+      <div className="bg-orange-50 p-7 rounded-[5px] my-6">
+        <h1 className="text-lg font-bold text-start">
+          Did not find what you are looking for
+        </h1>
+        <div className="flex justify-between items-center m-1">
+          <p className="text-gray-500 text-sm">
+            What know not every category fit into a box. if your need doesn't
+            match one of the listed options. Click{" "}
+            <Link
+              // to={"/category/691a295d6e6c415cf765deed/691b6a586e6c415cf765def1"}
+              className="text-blue-600 underline"
+            >
+              Other{" "}
+            </Link>{" "}
+            to tell us more.
+          </p>
+          <MoveRight className="h-4 w-4 text-gray-600" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Requirement;
