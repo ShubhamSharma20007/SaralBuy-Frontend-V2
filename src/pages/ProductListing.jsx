@@ -203,49 +203,60 @@ export default function ProductListing() {
   }, [categoriesArray]);
 
   useEffect(() => {
-    if (title && searchParams.get('key')) {
+    if (title) {
       setProducts([]);
       setPage(1);
       fetchMoreData(true,title);
     }
   }, [title]);
+  // useEffect(() => {
+  //   if (!title) return;
+  //   const currentFilters = {
+  //     category: searchParams.get("category") || "",
+  //     sort: searchParams.get("sort") || "",
+  //     min_budget: searchParams.get("min_budget") || "",
+  //     max_budget: searchParams.get("max_budget") || "",
+  //     subCategory: searchParams.get("subCategory") || "",
+  //   };
+  //    if (prevFiltersRef.current === null) {
+  //   prevFiltersRef.current = { title, ...currentFilters };
+  //   setProducts([]);
+  //   setPage(1);
+  //   fetchMoreData(true, title);
+  //   return;
+  // }
+  //   const prev = prevFiltersRef.current;
+  // const hasChanged =
+  //   prev.title !== title ||
+  //   prev.category !== currentFilters.category ||
+  //   prev.sort !== currentFilters.sort ||
+  //   prev.min_budget !== currentFilters.min_budget ||
+  //   prev.max_budget !== currentFilters.max_budget ||
+  //   prev.subCategory !== currentFilters.subCategory;
+
+  // if (hasChanged) {
+  //   prevFiltersRef.current = { title, ...currentFilters };
+  //   setProducts([]);
+  //   setPage(1);
+  //   fetchMoreData(true, title);
+  // }
+  // }, [
+  //   searchParams.get("category"),
+  //   searchParams.get("sort"),
+  //   searchParams.get("min_budget"),
+  //   searchParams.get("max_budget"),
+  //   searchParams.get("subCategory"),
+  // ]);
+
   useEffect(() => {
     if (!title) return;
-    const currentFilters = {
-      category: searchParams.get("category") || "",
-      sort: searchParams.get("sort") || "",
-      min_budget: searchParams.get("min_budget") || "",
-      max_budget: searchParams.get("max_budget") || "",
-      subCategory: searchParams.get("subCategory") || "",
-    };
-     if (prevFiltersRef.current === null) {
-    prevFiltersRef.current = { title, ...currentFilters };
-    setProducts([]);
-    setPage(1);
-    fetchMoreData(true, title);
-    return;
-  }
-    const prev = prevFiltersRef.current;
-  const hasChanged =
-    prev.title !== title ||
-    prev.category !== currentFilters.category ||
-    prev.sort !== currentFilters.sort ||
-    prev.min_budget !== currentFilters.min_budget ||
-    prev.max_budget !== currentFilters.max_budget ||
-    prev.subCategory !== currentFilters.subCategory;
-
-  if (hasChanged) {
-    prevFiltersRef.current = { title, ...currentFilters };
-    setProducts([]);
-    setPage(1);
-    fetchMoreData(true, title);
-  }
+    fetchMoreData(true,title);
   }, [
     searchParams.get("category"),
     searchParams.get("sort"),
     searchParams.get("min_budget"),
     searchParams.get("max_budget"),
-    searchParams.get("subCategory"),
+    searchParams.get('subCategory')
   ]);
 
   useEffect(() => {

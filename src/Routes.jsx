@@ -9,6 +9,10 @@ import Authentication from "./components/custom/auth/Authenticate";
 import CreateProductForm from "./pages/CreateProductForm";
 import ProductListing from "./pages/ProductListing";
 import ProductOverview from "./pages/ProductOverview";
+import Profile from "./pages/profile/Profile";
+import { AccountSettings } from "./pages/profile/AccountSetting";
+import Cart from "./pages/profile/Cart";
+import BidListing from "./pages/profile/BidListing";
 // const Profile = lazy(() => import("./pages/profile/Profile"));
 export default function AppRoutes() {
   const [open, setOpen] = useState(false);
@@ -41,19 +45,19 @@ export default function AppRoutes() {
           <Route path="/product-overview" element={<ProductOverview />} />
           <Route path="*" element={<h1>No Route Found</h1>} />
 
-          {/*  accoutn */}
-          {/* <Route path="/account" element={<Profile />}>
+          {/*  account */}
+          <Route path="/account" element={<Profile />}>
             <Route index element={<AccountSettings />} />
-            <Route path="bid" element={<BidListing />} />
             <Route path="cart" element={<Cart />} />
-            <Route path="deal" element={<Deal />} />
+            <Route path="bid" element={<BidListing />} />
+            {/* <Route path="deal" element={<Deal />} />
             <Route path="requirements" element={<BidRequirements />} />
             <Route
               path="requirements/:requirementId"
               element={<RequirementOverview />}
-            />
-            <Route path="notification" element={<Notification />} />
-          </Route> */}
+            /> */}
+            {/* <Route path="notification" element={<Notification />} /> */}
+          </Route>
         </Routes>
       </Suspense>
       <Footer />

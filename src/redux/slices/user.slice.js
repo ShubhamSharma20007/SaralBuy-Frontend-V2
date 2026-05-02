@@ -25,22 +25,15 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     setUser(state, action) {
+     console.log("UPDATE REDUX STATE------------>",action.payload)
       state.user = action.payload;
-    },
-    setLoading(state, action) {
-      state.loading = action.payload;
-    },
-    setError(state, action) {
-      state.error = action.payload;
+      state.error=false;
+      state.loading=false;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchUser.fulfilled, (state, action) => {
-        console.log({
-          state,
-          action,
-        });
         state.user = action.payload;
         state.loading = false;
       })
@@ -53,4 +46,5 @@ export const userSlice = createSlice({
       });
   },
 });
+export const { setUser, } = userSlice.actions;
 export default userSlice.reducer;

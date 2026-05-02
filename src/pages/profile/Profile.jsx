@@ -7,15 +7,15 @@ import {
 } from "../../Components/ui/breadcrumb";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Camera, House } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "../../Components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NavLink } from 'react-router-dom';
-import { useFetch } from "@/helper/use-fetch";
-import userService from "@/services/auth.service";
+import { useFetch } from "@/hooks/use-fetch";
+import userService from "@/services/user.service";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { getUserProfile } from "@/zustand/userProfile";
-import { fallBackName } from "@/helper/fallBackName";
-import { Spinner } from "@/Components/ui/shadcn-io/spinner";
+import { useDispatchUser, useUserState } from "@/redux/hooks/useUser";
+import { fallBackName } from "@/utils/fallBackName";
+import { Spinner } from "@/components/ui/spinner";
  const getRoutePath = (value) => {
     switch (value) {
       case 'profile':
@@ -62,10 +62,11 @@ const tags = [
 ]
 
 const Profile = () => {
-  const {user,setUser} = getUserProfile()
+  const {user} = useUserState()
+  const{dispatchUser} =useDispatchUser()
   const navigate =useNavigate()
    const { fn: updateProfilefn, data: updateProfileRes, loading:updateProfileLoading } = useFetch(userService.updateProfile)
-  const avatarRef = useRef<HTMLInputElement>(null)
+  const avatarRef = useRef(null)
    const handleUpdateProfile = async () => {
     const formData = new FormData()
    if (avatarRef.current && avatarRef.current.files) {
@@ -90,7 +91,7 @@ const Profile = () => {
 
    useEffect(()=>{
     if(updateProfileRes){
-      setUser(updateProfileRes)
+      dispatchUser(updateProfileRes)
       toast.success('Profile updated successfully')
     }
    },[updateProfileRes])

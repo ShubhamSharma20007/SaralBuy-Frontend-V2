@@ -2,7 +2,7 @@ import { useFetch } from "@/hooks/use-fetch";
 import { useEffect } from "react";
 import ProductCard from "./ProductCard";
 import requirementService from "@/services/requirement.service";
-
+ // in Dashboard using
 const RequirementSlide = () => {
   const { fn: recenReqFn, data: recentReqRes } = useFetch(
     requirementService.getRecentRequiremnts,
@@ -11,6 +11,7 @@ const RequirementSlide = () => {
     recenReqFn();
   }, []);
 
+  console.log(recentReqRes)
   return (
     <div
       className={` px-8 sm:px-16 relative bg-no-repeat z-0 bg-cover  py-10  min-h-82 bg-[url('./grid.png')]`}
@@ -28,12 +29,12 @@ const RequirementSlide = () => {
         </button>
      } */}
       </div>
-
+          
       {/* Card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-5 max-w-7xl mx-auto sm:px-4">
         {recentReqRes &&
           recentReqRes.map((item) => (
-            <ProductCard key={item._id} item={item} />
+            <ProductCard key={item._id} product={item} />
           ))}
       </div>
     </div>

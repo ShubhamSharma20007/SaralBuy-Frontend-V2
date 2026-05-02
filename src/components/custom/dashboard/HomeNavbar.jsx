@@ -52,6 +52,7 @@ import productService from "@/services/product.service";
 import { useFetch } from "@/hooks/use-fetch";
 import { useDebounce } from "use-debounce";
 import { useUserState } from "@/redux/hooks/useUser";
+import { getLocation } from "@/utils/locationAPI";
 const menu = [
   {
     title: "Account",
@@ -107,8 +108,6 @@ const accountMenu = [
     icon: <Bell className="w-5 h-5" />,
   },
 ];
-
-
 
 const MOCK_CHATS = [
   {
@@ -284,12 +283,12 @@ const renderMobileMenuItem = (item) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const HomeNavbar = () => {
-  const {user} = useUserState();
+  const { user } = useUserState();
   const recentChats = MOCK_CHATS;
-  const notifications = MOCK_NOTIFICATIONS;
-  const currenLocation = user?.currenLocation ?? "";
+  const notifications = MOCK_NOTIFICATIONS;;
   const unseenCount = notifications.filter((n) => !n.seen).length;
   const { fn, data } = useFetch(productService.getSeachProduct);
+    const [currenLocation, setCurrentLocation] = useState(user?.currenLocation ?? "")
   const unreadChatsCount = recentChats.reduce((acc, chat) => {
     const isBuyer = chat.buyerId === user?._id;
     const isSeller = chat.sellerId === user?._id;
@@ -353,6 +352,36 @@ const HomeNavbar = () => {
       /* navigate(`/product-listing?title=${encodeURIComponent(text)}&key=enter`) */
     }
   };
+
+  async function getGeoLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async function (position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          const location = await getLocation(longitude, latitude);
+          setCurrentLocation(location);
+          // await updateProfile({ currentLocation: location })
+        },
+        (err) => console.log(err),
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
+        },
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  }
+
+  useEffect(() => {
+    if ((!user?.currenLocation || user?.currenLocation === "") && user) {
+      getGeoLocation();
+    } else {
+      setCurrentLocation(user?.currenLocation);
+    }
+  }, [user]);
 
   // ── Shared search dropdown JSX ───────────────────────────────────────────
   const SearchDropdown = ({ id }) =>

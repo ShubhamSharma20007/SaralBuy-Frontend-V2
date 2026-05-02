@@ -24,7 +24,7 @@ import { useDispatchUser,useUserState } from "@/redux/hooks/useUser";
 const OtpPopup = ({open,setOpen,number,sessionId,setSessionId}) => {
   const {fn,data,loading}= useFetch(authService.verifyOtp)
   const [value, setValue] = React.useState("")
-  const dispatchUser = useDispatchUser();
+  const {dispatchUser} = useDispatchUser();
   const countDown =60; 
   const [sentTimer,setResentTimer]=React.useState(countDown)
   const getProfile = useUserState()

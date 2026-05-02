@@ -3,7 +3,7 @@ import { useDispatchUser } from "./redux/hooks/useUser";
 import AppRoutes from "./Routes";
 
 export const App = () => {
-  const dispatchUser = useDispatchUser();
+  const {dispatchUser} = useDispatchUser();
 
   useEffect(() => {
     dispatchUser();
