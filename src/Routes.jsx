@@ -1,7 +1,6 @@
 import Dashboard from '@/pages/Dashboard';
 import { Suspense, useEffect, useState } from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router';
-// import ScrollToTop from '@/utils/ScrollToTop'
+import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-router';
 import HomeNavbar from './components/custom/dashboard/HomeNavbar';
 import Footer from './components/custom/Footer';
 import Requirement from './components/custom/dashboard/Requirement';
@@ -13,6 +12,17 @@ import Profile from './pages/profile/Profile';
 import { AccountSettings } from './pages/profile/AccountSetting';
 import Cart from './pages/profile/Cart';
 import BidListing from './pages/profile/BidListing';
+import BidOverview from './pages/profile/BidOverview';
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
 // const Profile = lazy(() => import("./pages/profile/Profile"));
 export default function AppRoutes() {
   const [open, setOpen] = useState(false);
@@ -24,7 +34,7 @@ export default function AppRoutes() {
   }, []);
   return (
     <Router>
-      {/* <ScrollToTop /> */}
+      <ScrollToTop />
       <Authentication open={open} setOpen={setOpen} />
       <HomeNavbar />
       <Suspense
@@ -47,6 +57,7 @@ export default function AppRoutes() {
             <Route index element={<AccountSettings />} />
             <Route path="cart" element={<Cart />} />
             <Route path="bid" element={<BidListing />} />
+
             {/* <Route path="deal" element={<Deal />} />
             <Route path="requirements" element={<BidRequirements />} />
             <Route
@@ -55,6 +66,7 @@ export default function AppRoutes() {
             /> */}
             {/* <Route path="notification" element={<Notification />} /> */}
           </Route>
+          <Route path="/bid-overview/:bidId" element={<BidOverview />} />
         </Routes>
       </Suspense>
       <Footer />

@@ -15,60 +15,29 @@ import { useCategory, useCategoryState } from '@/redux/hooks/useCategory';
 import { Range } from 'react-range';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useSearchParams } from 'react-router-dom';
-// import { Spinner } from '../Components/ui/shadcn-io/spinner';
 import productService from '@/services/product.service';
 import ProductListingCard from '@/components/custom/listing/ProductListingCard';
 import { ProductListingCardSkeleton } from '@/const/CustomSkeletons';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
+
 export default function ProductListing() {
   const [values, setValues] = useState([0, 0]);
-  const prevFiltersRef = useRef(null);
   const [filters, setFilters] = useState([
-    {
-      id: 'category',
-      name: 'All Category',
-      options: [
-        // DYNAMIC CATEGORIES
-      ],
-    },
-    {
-      id: 'subCategory',
-      name: 'Sub Category',
-      options: [
-        // DYNAMIC CATEGORIES
-      ],
-    },
-    {
-      id: 'budget',
-      name: 'Budget',
-      options: [
-        { value: 'new-arrivals', label: 'New Arrivals', checked: false },
-        { value: 'sale', label: 'Sale', checked: false },
-        { value: 'travel', label: 'Travel', checked: true },
-        { value: 'organization', label: 'Organization', checked: false },
-        { value: 'accessories', label: 'Accessories', checked: false },
-      ],
-    },
+    { id: 'category', name: 'All Category', options: [] },
+    { id: 'subCategory', name: 'Sub Category', options: [] },
+    { id: 'budget', name: 'Budget', options: [] },
     {
       id: 'sort',
       name: 'Sort By',
       options: [
         { value: 'newly_added', label: 'Newly Added', checked: true },
         { value: 'feature', label: 'Feature', checked: false },
-        {
-          value: 'aplhabetically_a_z',
-          label: 'Aplhabetically (A-Z)',
-          checked: false,
-        },
-        {
-          value: 'aplhabetically_z_a',
-          label: 'Aplhabetically (Z-A)',
-          checked: false,
-        },
+        { value: 'aplhabetically_a_z', label: 'Aplhabetically (A-Z)', checked: false },
+        { value: 'aplhabetically_z_a', label: 'Aplhabetically (Z-A)', checked: false },
         { value: 'low_to_high', label: 'Price Low to High', checked: false },
-        { value: 'high_to_low', label: 'price High to Low', checked: false },
+        { value: 'high_to_low', label: 'Price High to Low', checked: false },
       ],
     },
   ]);
@@ -79,13 +48,14 @@ export default function ProductListing() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [title, setTitle] = useState('');
-  const [key, setKey] = useState('');
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // ← NEW: initial load state
+  const isFetchingRef = useRef(false);
   const limit = 10;
+
   const formState = useForm({
     defaultValues: {
       category: searchParams.get('category') || '',
@@ -99,150 +69,85 @@ export default function ProductListing() {
   useEffect(() => {
     dispatachCategory();
   }, []);
+
+  // Sync form → searchParams
   useEffect(() => {
-    const updateSearchParams = () => {
-      setSearchParams(prevParams => {
-        const newParams = new URLSearchParams(prevParams);
-
-        // Handle category
-        if (watchAll.category) {
-          newParams.set('category', watchAll.category);
-        } else {
-          newParams.delete('category');
-        }
-        // Handle category
-        if (watchAll.subCategory) {
-          newParams.set('subCategory', watchAll.subCategory);
-        } else {
-          newParams.delete('subCategory');
-        }
-
-        // Handle sort
-        if (watchAll.sort) {
-          newParams.set('sort', watchAll.sort);
-        } else {
-          newParams.delete('sort');
-        }
-
+    const id = setTimeout(() => {
+      setSearchParams(prev => {
+        const p = new URLSearchParams(prev);
+        watchAll.category ? p.set('category', watchAll.category) : p.delete('category');
+        watchAll.subCategory ? p.set('subCategory', watchAll.subCategory) : p.delete('subCategory');
+        watchAll.sort ? p.set('sort', watchAll.sort) : p.delete('sort');
         if (values[1] > 0) {
-          newParams.set('min_budget', values[0].toString());
-          newParams.set('max_budget', values[1].toString());
+          p.set('min_budget', values[0].toString());
+          p.set('max_budget', values[1].toString());
         }
-
-        return newParams;
+        return p;
       });
-    };
-    const timeoutId = setTimeout(updateSearchParams, 300);
-    return () => clearTimeout(timeoutId);
+    }, 300);
+    return () => clearTimeout(id);
   }, [watchAll.category, watchAll.sort, watchAll.subCategory, values, setSearchParams]);
 
-  // Clear subcategory when category changes
+  // Clear subCategory when category changes
   useEffect(() => {
     if (watchAll.category && watchAll.category !== searchParams.get('category')) {
       formState.setValue('subCategory', '');
-      setSearchParams(prevParams => {
-        const newParams = new URLSearchParams(prevParams);
-        newParams.delete('subCategory');
-        return newParams;
+      setSearchParams(prev => {
+        const p = new URLSearchParams(prev);
+        p.delete('subCategory');
+        return p;
       });
     }
-  }, [watchAll.category, searchParams, formState, setSearchParams]);
+  }, [watchAll.category]);
 
+  // Populate category options
   useEffect(() => {
-    if (searchParams.get('min_budget')) {
-      setValues([
-        parseInt(searchParams.get('min_budget')),
-        parseInt(searchParams.get('max_budget')),
-      ]);
-    } else if (searchParams.get('max_budget')) {
-      setValues([
-        parseInt(searchParams.get('min_budget')),
-        parseInt(searchParams.get('max_budget')),
-      ]);
-    } else if (searchParams.get('categoryId')) {
-      formState.setValue('category', searchParams.get('category'));
-    } else if (searchParams.get('subCategory')) {
-      formState.setValue('subCategory', searchParams.get('subCategory'));
-    } else if (searchParams.get('sort')) {
-      formState.setValue('sort', searchParams.get('sort'));
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!searchParams) return;
-    setTitle(searchParams.get('title') || '');
-    if (searchParams.get('key')) setKey(searchParams.get('key'));
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!categoriesArray || categoriesArray.length === 0) return;
+    if (!categoriesArray?.length) return;
     setFilters(prev =>
-      prev.map(section => {
-        if (section.id === 'category') {
-          return {
-            ...section,
-            options: categoriesArray.map(cat => ({
-              value: cat._id,
-              label: cat.categoryName,
-              checked: false,
-            })),
-          };
-        }
-        return section;
-      })
+      prev.map(s =>
+        s.id === 'category'
+          ? {
+              ...s,
+              options: categoriesArray.map(c => ({
+                value: c._id,
+                label: c.categoryName,
+                checked: false,
+              })),
+            }
+          : s
+      )
     );
   }, [categoriesArray]);
 
+  // Populate subCategory options
   useEffect(() => {
-    if (title) {
-      setProducts([]);
-      setPage(1);
-      fetchMoreData(true, title);
+    const selectedCat = categoriesArray?.find(item => item._id === searchParams.get('category'));
+    if (selectedCat?.subCategories?.length) {
+      setFilters(prev =>
+        prev.map(s =>
+          s.id === 'subCategory'
+            ? {
+                ...s,
+                options: selectedCat.subCategories.map(c => ({
+                  value: c._id,
+                  label: c.name,
+                  checked: false,
+                })),
+              }
+            : s
+        )
+      );
     }
-  }, [title]);
-  // useEffect(() => {
-  //   if (!title) return;
-  //   const currentFilters = {
-  //     category: searchParams.get("category") || "",
-  //     sort: searchParams.get("sort") || "",
-  //     min_budget: searchParams.get("min_budget") || "",
-  //     max_budget: searchParams.get("max_budget") || "",
-  //     subCategory: searchParams.get("subCategory") || "",
-  //   };
-  //    if (prevFiltersRef.current === null) {
-  //   prevFiltersRef.current = { title, ...currentFilters };
-  //   setProducts([]);
-  //   setPage(1);
-  //   fetchMoreData(true, title);
-  //   return;
-  // }
-  //   const prev = prevFiltersRef.current;
-  // const hasChanged =
-  //   prev.title !== title ||
-  //   prev.category !== currentFilters.category ||
-  //   prev.sort !== currentFilters.sort ||
-  //   prev.min_budget !== currentFilters.min_budget ||
-  //   prev.max_budget !== currentFilters.max_budget ||
-  //   prev.subCategory !== currentFilters.subCategory;
+  }, [searchParams.get('category'), categoriesArray]);
 
-  // if (hasChanged) {
-  //   prevFiltersRef.current = { title, ...currentFilters };
-  //   setProducts([]);
-  //   setPage(1);
-  //   fetchMoreData(true, title);
-  // }
-  // }, [
-  //   searchParams.get("category"),
-  //   searchParams.get("sort"),
-  //   searchParams.get("min_budget"),
-  //   searchParams.get("max_budget"),
-  //   searchParams.get("subCategory"),
-  // ]);
-
+  // ── SINGLE fetch trigger ──────────────────────────────────────────────────
   useEffect(() => {
-    if (!title) return;
-    fetchMoreData(true, title);
+    setProducts([]);
+    setPage(1);
+    setHasMore(true);
+    fetchData(true);
   }, [
+    searchParams.get('title'),
     searchParams.get('category'),
     searchParams.get('sort'),
     searchParams.get('min_budget'),
@@ -250,18 +155,15 @@ export default function ProductListing() {
     searchParams.get('subCategory'),
   ]);
 
-  useEffect(() => {
-    return () => {
-      prevFiltersRef.current = null;
-    };
-  }, []);
+  const fetchData = async (reset = false) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
 
-  const fetchMoreData = async (reset = false, forcedTitle = '') => {
-    const resolvedTitle = forcedTitle || title;
-    if (!resolvedTitle) return console.warn('title missing');
+    // Show skeleton on initial/reset load only
+    if (reset) setIsLoading(true);
+
+    const title = searchParams.get('title') || '';
     const currentPage = reset ? 1 : page;
-
-    // Extract filters from searchParams
     const category = searchParams.get('category') || undefined;
     const subCategoryId = searchParams.get('subCategory') || undefined;
     const min_budget = searchParams.get('min_budget')
@@ -273,7 +175,7 @@ export default function ProductListing() {
     const sort = searchParams.get('sort') || undefined;
 
     try {
-      const response = await productService.getProductByTitle(resolvedTitle, currentPage, limit, {
+      const response = await productService.getProductByTitle(title, currentPage, limit, {
         category,
         subCategoryId,
         min_budget,
@@ -282,63 +184,31 @@ export default function ProductListing() {
       });
 
       const newProducts = response?.data?.data?.products || [];
-      //   const maxPrice = Math.max(...newProducts.map((p: any) => p.minimumBudget || 0), 0);
-      //   setMaxBudget(maxPrice);
+      const totalCount = response?.data?.data?.total || 0;
+      const totalPages = response?.data?.data?.totalPages || 1;
 
       setProducts(prev => (reset ? newProducts : [...prev, ...newProducts]));
-      setTotal(response?.data?.data.total);
-      const totalPages = response?.data?.data.totalPages;
-
+      setTotal(totalCount);
       setHasMore(currentPage < totalPages);
-      setPage(reset ? 2 : currentPage + 1); // update consistently
+      setPage(reset ? 2 : currentPage + 1);
     } catch (error) {
-      console.log('Error during get products', error);
+      console.error('Error fetching products:', error);
+    } finally {
+      isFetchingRef.current = false;
+      if (reset) setIsLoading(false); // ← hide skeleton after load
     }
   };
 
-  useEffect(() => {
-    const categoroies =
-      categoriesArray && categoriesArray?.find(item => item._id === searchParams.get('category'));
-    if (categoroies?.subCategories && Array.isArray(categoroies?.subCategories)) {
-      setFilters(prev =>
-        prev.map(section => {
-          if (section.id === 'subCategory') {
-            return {
-              ...section,
-              options: categoroies.subCategories.map(cat => ({
-                value: cat._id,
-                label: cat.name,
-                checked: false,
-              })),
-            };
-          }
-          return section;
-        })
-      );
-    }
-  }, [searchParams.get('category')]);
+  const fetchMoreData = () => fetchData(false);
 
   const handleRemoveFilter = () => {
     setMobileFiltersOpen(false);
-    formState.reset({
-      category: '',
-      subCategory: '',
-      sort: '',
-      budget: '',
-    });
-
+    formState.reset({ category: '', subCategory: '', sort: '', budget: '' });
     setValues([0, 0]);
-
     setSearchParams(prev => {
-      const newParams = new URLSearchParams(prev);
-
-      newParams.delete('category');
-      newParams.delete('subCategory');
-      newParams.delete('min_budget');
-      newParams.delete('max_budget');
-      newParams.delete('sort');
-
-      return newParams;
+      const p = new URLSearchParams(prev);
+      ['category', 'subCategory', 'min_budget', 'max_budget', 'sort'].forEach(k => p.delete(k));
+      return p;
     });
   };
 
@@ -348,6 +218,127 @@ export default function ProductListing() {
     searchParams.get('min_budget') ||
     searchParams.get('max_budget') ||
     searchParams.get('sort')
+  );
+
+  const title = searchParams.get('title') || '';
+
+  // ── Shared filter panel JSX (used in both mobile + desktop) ──────────────
+  const FilterPanel = () => (
+    <>
+      {filters.map((section, index) =>
+        section.id !== 'budget' ? (
+          <Disclosure
+            key={section.id ?? index}
+            as="div"
+            className={`border-b border-gray-200 pb-3 mt-3 ${
+              section.id === 'subCategory' && !formState.getValues('category') ? 'hidden' : 'block'
+            }`}
+          >
+            <h3 className="-my-3 flow-root">
+              <DisclosureButton className="group flex w-full items-center justify-between py-2 text-sm text-gray-400 hover:text-gray-500">
+                <span className="font-regular text-[16px] text-orange-700">{section.name}</span>
+                <span className="ml-6 flex items-center">
+                  <ChevronUp aria-hidden="true" className="size-5 group-data-open:hidden" />
+                  <ChevronDown aria-hidden="true" className="size-5 group-not-data-open:hidden" />
+                </span>
+              </DisclosureButton>
+            </h3>
+            <DisclosurePanel className="pt-6">
+              <div className="space-y-4">
+                <Controller
+                  name={section.id}
+                  control={formState.control}
+                  render={({ field }) => (
+                    <RadioGroup value={field.value} onValueChange={field.onChange}>
+                      {section.options.map((option, optionIdx) => (
+                        <div key={option.value} className="flex items-center gap-2">
+                          <RadioGroupItem
+                            value={option.value}
+                            className="border border-orange-700 focus-visible:border-orange-700 focus-visible:ring-orange-700"
+                            id={`filter-${section.id}-${optionIdx}`}
+                          />
+                          <Label
+                            htmlFor={`filter-${section.id}-${optionIdx}`}
+                            className="text-sm text-gray-700 capitalize tracking-wide"
+                          >
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+                />
+              </div>
+            </DisclosurePanel>
+          </Disclosure>
+        ) : (
+          <Disclosure
+            key={section.id ?? index}
+            as="div"
+            className="border-b border-gray-200 pb-3 mt-3"
+          >
+            <h3 className="-my-3 flow-root">
+              <DisclosureButton className="group flex w-full items-center justify-between py-3 text-sm text-gray-400 hover:text-gray-500">
+                <span className="font-regular text-[16px] text-orange-700">{section.name}</span>
+                <span className="ml-6 flex items-center">
+                  <ChevronUp aria-hidden="true" className="size-5 group-data-open:hidden" />
+                  <ChevronDown aria-hidden="true" className="size-5 group-not-data-open:hidden" />
+                </span>
+              </DisclosureButton>
+            </h3>
+            <DisclosurePanel className="pt-6">
+              <div className="w-full max-w-md">
+                <Range
+                  values={values}
+                  step={100}
+                  min={0}
+                  max={50001}
+                  onChange={vals => setValues(vals)}
+                  renderTrack={({ props, children }) => {
+                    const leftPercent = ((values[0] - 100) / (50001 - 100)) * 100;
+                    const rightPercent = ((values[1] - 100) / (50001 - 100)) * 100;
+                    return (
+                      <div {...props} className="h-1 w-full bg-gray-300 rounded relative">
+                        <div
+                          className="absolute h-1 bg-orange-700 rounded"
+                          style={{
+                            left: `${leftPercent}%`,
+                            width: `${rightPercent - leftPercent}%`,
+                          }}
+                        />
+                        {children}
+                      </div>
+                    );
+                  }}
+                  renderThumb={({ props }) => (
+                    <div
+                      {...props}
+                      className="w-4 h-4 border-orange-700 border-2 bg-white rounded-full flex items-center justify-center shadow"
+                    />
+                  )}
+                />
+                <div className="flex justify-between items-center mt-3 text-sm">
+                  Price: {values[0].toLocaleString()} –{' '}
+                  {values[1] > 50000 ? '50000+' : values[1].toLocaleString()}
+                </div>
+              </div>
+            </DisclosurePanel>
+          </Disclosure>
+        )
+      )}
+
+      {isFilterActive && (
+        <Button
+          type="button"
+          onClick={handleRemoveFilter}
+          variant="ghost"
+          size="lg"
+          className="border w-full mt-5 border-orange-600 text-orange-600 rounded-[5px] hover:bg-orange-500 hover:text-white transition-all duration-300 ease-in-out cursor-pointer"
+        >
+          Remove Filter's
+        </Button>
+      )}
+    </>
   );
 
   return (
@@ -363,486 +354,82 @@ export default function ProductListing() {
             transition
             className="fixed inset-0 bg-black/25 transition-opacity duration-300 ease-linear data-closed:opacity-0"
           />
-
           <div className="fixed inset-0 z-40 flex">
             <DialogPanel
               transition
-              className="relative ml-auto flex bg-white size-full max-w-xs transform flex-col overflow-y-auto  pt-4 pb-6 shadow-xl transition duration-300 ease-in-out data-closed:translate-x-full"
+              className="relative ml-auto flex bg-white size-full max-w-xs transform flex-col overflow-y-auto pt-4 pb-6 shadow-xl transition duration-300 ease-in-out data-closed:translate-x-full"
             >
               <div className="flex items-center justify-between px-4">
                 <h2 className="text-lg font-medium text-gray-900">Product Listing</h2>
                 <button
                   type="button"
                   onClick={() => setMobileFiltersOpen(false)}
-                  className="relative -mr-2 flex size-10 items-center justify-center rounded-md  p-2 text-gray-400 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
+                  className="relative -mr-2 flex size-10 items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-50"
                 >
-                  <span className="absolute -inset-0.5" />
-                  <span className="sr-only">Close menu</span>
                   <XMarkIcon aria-hidden="true" className="size-6" />
                 </button>
               </div>
-
-              {/* Filters */}
-
               <form className="mt-4 border-t border-gray-200 p-6">
-                <h3 className="sr-only">Categories</h3>
-
-                {filters.map(section =>
-                  section.id !== 'budget' ? (
-                    <>
-                      <Disclosure
-                        key={section.id}
-                        as="div"
-                        className={`border-b border-gray-200 pb-3 mt-3 ${section.id === 'subCategory' && !formState.getValues('category') ? 'hidden' : 'block'}`}
-                      >
-                        <h3 className="-my-3 flow-root">
-                          <DisclosureButton
-                            className="group flex w-full items-center justify-between py-2 text-sm text-gray-400 hover:text-gray-500"
-                            onChange={e => {
-                              alert(e);
-                            }}
-                          >
-                            <span className="font-regular text-[16px] text-orange-700">
-                              {section.name}
-                            </span>
-                            <span className="ml-6 flex items-center">
-                              <ChevronUp
-                                aria-hidden="true"
-                                className="size-5 group-data-open:hidden"
-                              />
-                              <ChevronDown
-                                aria-hidden="true"
-                                className="size-5 group-not-data-open:hidden"
-                              />
-                            </span>
-                          </DisclosureButton>
-                        </h3>
-                        <DisclosurePanel className="pt-6">
-                          <div className="space-y-4">
-                            <Controller
-                              name={section.id}
-                              control={formState.control}
-                              render={({ field }) => (
-                                <RadioGroup
-                                  value={field.value}
-                                  onValueChange={value => {
-                                    field.onChange(value);
-                                  }}
-                                >
-                                  {section.options.map((option, optionIdx) => (
-                                    <div key={option.value} className="flex items-center gap-2">
-                                      <RadioGroupItem
-                                        value={option.value}
-                                        className="border border-orange-700 focus-visible:border-orange-700 focus-visible:ring-orange-700"
-                                        id={`filter-${section.id}-${optionIdx}`}
-                                      />
-                                      <Label
-                                        htmlFor={`filter-${section.id}-${optionIdx}`}
-                                        className="text-sm text-gray-700 capitalize tracking-wide"
-                                      >
-                                        {option.label}
-                                      </Label>
-                                    </div>
-                                  ))}
-                                </RadioGroup>
-                              )}
-                            />
-                          </div>
-                        </DisclosurePanel>
-                      </Disclosure>
-                    </>
-                  ) : (
-                    <Disclosure
-                      key={section.id}
-                      as="div"
-                      className="border-b border-gray-200 pb-3 mt-3"
-                    >
-                      <h3 className="-my-3 flow-root">
-                        <DisclosureButton className="group flex w-full items-center justify-between py-3 text-sm text-gray-400 hover:text-gray-500">
-                          <span className="font-regular text-[16px] text-orange-700">
-                            {section.name}
-                          </span>
-                          <span className="ml-6 flex items-center">
-                            <ChevronUp
-                              aria-hidden="true"
-                              className="size-5 group-data-open:hidden"
-                            />
-                            <ChevronDown
-                              aria-hidden="true"
-                              className="size-5 group-not-data-open:hidden"
-                            />
-                          </span>
-                        </DisclosureButton>
-                      </h3>
-                      <DisclosurePanel className="pt-6">
-                        <div className="w-full max-w-md">
-                          <Range
-                            values={values}
-                            step={100}
-                            min={0}
-                            max={50001}
-                            onChange={vals => {
-                              setValues(vals);
-                            }}
-                            renderTrack={({ props, children }) => {
-                              const min = 100;
-                              const max = 50001;
-                              const range = max - min;
-
-                              const leftPercent = ((values[0] - min) / range) * 100;
-                              const rightPercent = ((values[1] - min) / range) * 100;
-
-                              return (
-                                <div {...props} className="h-1 w-full bg-gray-300 rounded relative">
-                                  <div
-                                    className="absolute h-1 bg-orange-700 rounded"
-                                    style={{
-                                      left: `${leftPercent}%`,
-                                      width: `${rightPercent - leftPercent}%`,
-                                    }}
-                                  />
-                                  {children}
-                                </div>
-                              );
-                            }}
-                            renderThumb={({ props }) => (
-                              <div
-                                {...props}
-                                className="w-4 h-4 border-orange-700 border-2 bg-white rounded-full flex items-center justify-center shadow"
-                              />
-                            )}
-                          />
-
-                          <div className="flex justify-between items-center mt-3 text-sm">
-                            Price : {Number(values[0].toString().padStart(2, '0')).toLocaleString()}{' '}
-                            -{' '}
-                            {values[1] > 50000
-                              ? '50000+'
-                              : Number(values[1].toString().padStart(2, '0')).toLocaleString()}
-                          </div>
-                        </div>
-                      </DisclosurePanel>
-                    </Disclosure>
-                  )
-                )}
-                {/* buttons */}
-                {isFilterActive && (
-                  <Button
-                    type="button"
-                    onClick={handleRemoveFilter}
-                    variant="ghost"
-                    size="lg"
-                    className="border w-full mt-5 shadow-orange-500 border-orange-600 text-orange-600 rounded-[5px]  hover:bg-orange-500 hover:text-white transition-all duration-300 ease-in-out underline-0 cursor-pointer"
-                  >
-                    Remove Filter's
-                  </Button>
-                )}
+                <FilterPanel />
               </form>
-
-              {/* <form className="mt-4 border-t border-gray-200 p-6">
-                <h3 className="sr-only">Categories</h3>
-                {filters.map((section) => (
-                  section.id !== 'budget' ? <Disclosure key={section.id} as="div" className="border-b border-gray-200 py-6">
-                    <h3 className="-my-3 flow-root">
-                      <DisclosureButton className="group flex w-full items-center justify-between  py-2 text-sm text-gray-400 hover:text-gray-500">
-                        <span className="font-semibold text-lg text-gray-600 tracking-wide" >{section.name}</span>
-                        <span className="ml-6 flex items-center">
-                          <ChevronUp aria-hidden="true" className="size-5 group-data-open:hidden" />
-                          <ChevronDown aria-hidden="true" className="size-5 group-not-data-open:hidden " />
-                        </span>
-                      </DisclosureButton>
-                    </h3>
-                    <DisclosurePanel className="pt-6">
-                      <div className="space-y-4">
-                        <RadioGroup defaultValue={section.options[0]?.value}>
-                          {section.options.map((option, optionIdx) => (
-                            <div key={option.value} className="flex items-center gap-2">
-                              <RadioGroupItem
-                                value={option.value}
-                                id={`filter-${section.id}-${optionIdx}`}
-                              />
-                              <Label htmlFor={`filter-${section.id}-${optionIdx}`} className="text-sm text-gray-600 capitalize tracking-wide">
-                                {option.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </div>
-                    </DisclosurePanel>
-                  </Disclosure> :
-                    <Disclosure key={section.id} as="div" className="border-b border-gray-200 py-6">
-                      <h3 className="-my-3 flow-root">
-                        <DisclosureButton className="group flex w-full items-center justify-between  py-3 text-sm text-gray-400 hover:text-gray-500">
-                          <span className="font-semibold text-lg text-gray-600">{section.name}</span>
-                          <span className="ml-6 flex items-center">
-                            <ChevronUp aria-hidden="true" className="size-5 group-data-open:hidden" />
-                            <ChevronDown aria-hidden="true" className="size-5 group-not-data-open:hidden" />
-                          </span>
-                        </DisclosureButton>
-                      </h3>
-                      <DisclosurePanel className="pt-6">
-                        <div className="w-full max-w-md border-[1.5px] border-gray-200 rounded-lg  p-3">
-                          <div className="flex justify-between items-center mb-3">
-                           
-                          </div>
-                          <Range
-                            values={values}
-                            step={100}
-                            min={100}
-                            max={50001}
-                            onChange={(vals) => setValues(vals)}
-                            renderTrack={({ props, children }) => {
-                              const min = 100;
-                              const max = 50001;
-                              const range = max - min;
-
-                              const leftPercent = ((values[0] - min) / range) * 100;
-                              const rightPercent = ((values[1] - min) / range) * 100;
-
-                              return (
-                                <div {...props} className="h-1 w-full bg-gray-300 rounded relative">
-                                  <div
-                                    className="absolute h-1 bg-orange-600 rounded"
-                                    style={{
-                                      left: `${leftPercent}%`,
-                                      width: `${rightPercent - leftPercent}%`,
-                                    }}
-                                  />
-                                  {children}
-                                </div>
-                              );
-                            }}
-                            renderThumb={({ props }) => (
-                              <div
-                                {...props}
-                                className="w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center shadow"
-                              />
-                            )}
-                          />
-
-                          <div className="flex justify-between items-center mt-3 text-sm">
-                            Price : {Number(values[0].toString().padStart(2, "0")).toLocaleString()} - {Number(values[1].toString().padStart(2, "0")).toLocaleString()}
-                          </div>
-                        </div>
-                      </DisclosurePanel>
-                    </Disclosure>
-
-
-                ))}
-              </form> */}
             </DialogPanel>
           </div>
         </Dialog>
 
-        {/*  Desktop */}
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ">
-          <div className="flex items-baseline justify-end  ">
-            {/* <Breadcrumb className="sm:block hidden">
-          <BreadcrumbList >
-            <BreadcrumbItem className="flex items-center gap-2 cursor-pointer" >
-               <BreadcrumbPage className="capitalize font-semibold text-orange-600 ">
-                {title}
-              </BreadcrumbPage>
-                <BreadcrumbSeparator />
-                <BreadcrumbPage className="capitalize font-semibold text-gray-500">
-                Reuirements {total || ""}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-
-          </BreadcrumbList>
-        </Breadcrumb> */}
+        {/* Desktop */}
+        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-baseline justify-end">
             <button
               type="button"
               onClick={() => setMobileFiltersOpen(true)}
-              className="-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden float-right inline-block"
+              className="-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden"
             >
-              <span className="sr-only">Filters</span>
               <FunnelIcon aria-hidden="true" className="size-5" />
             </button>
           </div>
 
           <section aria-labelledby="products-heading" className="py-10">
-            <h2 id="products-heading" className="sr-only">
-              Products
-            </h2>
-
             <div className="grid grid-cols-1 gap-x-4 gap-y-10 lg:grid-cols-4">
-              {/* Category */}
+              {/* Desktop filter sidebar */}
               <form className="hidden lg:block rounded-2xl p-4 shadow-xs bg-[#fcf3ed] sticky top-4 self-start">
-                <h3 className="sr-only">Categories</h3>
-
-                {filters.map((section, index) =>
-                  section.id !== 'budget' ? (
-                    <Disclosure
-                      key={index}
-                      as="div"
-                      className={`border-b border-gray-200 pb-3 mt-3 ${section.id === 'subCategory' && !formState.getValues('category') ? 'hidden' : 'block'}`}
-                    >
-                      <h3 className="-my-3 flow-root">
-                        <DisclosureButton
-                          className="group flex w-full items-center justify-between py-2 text-sm text-gray-400 hover:text-gray-500"
-                          onChange={e => {
-                            alert(e);
-                          }}
-                        >
-                          <span className="font-regular text-[16px] text-orange-700">
-                            {section.name}
-                          </span>
-                          <span className="ml-6 flex items-center">
-                            <ChevronUp
-                              aria-hidden="true"
-                              className="size-5 group-data-open:hidden"
-                            />
-                            <ChevronDown
-                              aria-hidden="true"
-                              className="size-5 group-not-data-open:hidden"
-                            />
-                          </span>
-                        </DisclosureButton>
-                      </h3>
-                      <DisclosurePanel className="pt-6">
-                        <div className="space-y-4">
-                          <Controller
-                            name={section.id}
-                            control={formState.control}
-                            render={({ field }) => (
-                              <RadioGroup
-                                value={field.value}
-                                onValueChange={value => {
-                                  field.onChange(value);
-                                }}
-                              >
-                                {section.options.map((option, optionIdx) => (
-                                  <div key={option.value} className="flex items-center gap-2">
-                                    <RadioGroupItem
-                                      value={option.value}
-                                      className="border border-orange-700 focus-visible:border-orange-700 focus-visible:ring-orange-700"
-                                      id={`filter-${section.id}-${optionIdx}`}
-                                    />
-                                    <Label
-                                      htmlFor={`filter-${section.id}-${optionIdx}`}
-                                      className="text-sm text-gray-700 capitalize tracking-wide"
-                                    >
-                                      {option.label}
-                                    </Label>
-                                  </div>
-                                ))}
-                              </RadioGroup>
-                            )}
-                          />
-                        </div>
-                      </DisclosurePanel>
-                    </Disclosure>
-                  ) : (
-                    <Disclosure key={index} as="div" className="border-b border-gray-200 pb-3 mt-3">
-                      <h3 className="-my-3 flow-root">
-                        <DisclosureButton className="group flex w-full items-center justify-between py-3 text-sm text-gray-400 hover:text-gray-500">
-                          <span className="font-regular text-[16px] text-orange-700">
-                            {section.name}
-                          </span>
-                          <span className="ml-6 flex items-center">
-                            <ChevronUp
-                              aria-hidden="true"
-                              className="size-5 group-data-open:hidden"
-                            />
-                            <ChevronDown
-                              aria-hidden="true"
-                              className="size-5 group-not-data-open:hidden"
-                            />
-                          </span>
-                        </DisclosureButton>
-                      </h3>
-                      <DisclosurePanel className="pt-6">
-                        <div className="w-full max-w-md">
-                          <Range
-                            values={values}
-                            step={100}
-                            min={0}
-                            max={50001}
-                            onChange={vals => {
-                              setValues(vals);
-                            }}
-                            renderTrack={({ props, children }) => {
-                              const min = 100;
-                              const max = 50001;
-                              const range = max - min;
-
-                              const leftPercent = ((values[0] - min) / range) * 100;
-                              const rightPercent = ((values[1] - min) / range) * 100;
-
-                              return (
-                                <div {...props} className="h-1 w-full bg-gray-300 rounded relative">
-                                  <div
-                                    className="absolute h-1 bg-orange-700 rounded"
-                                    style={{
-                                      left: `${leftPercent}%`,
-                                      width: `${rightPercent - leftPercent}%`,
-                                    }}
-                                  />
-                                  {children}
-                                </div>
-                              );
-                            }}
-                            renderThumb={({ props }) => (
-                              <div
-                                {...props}
-                                className="w-4 h-4 border-orange-700 border-2 bg-white rounded-full flex items-center justify-center shadow"
-                              />
-                            )}
-                          />
-
-                          <div className="flex justify-between items-center mt-3 text-sm">
-                            Price : {Number(values[0].toString().padStart(2, '0')).toLocaleString()}{' '}
-                            -{' '}
-                            {values[1] > 50000
-                              ? '50000+'
-                              : Number(values[1].toString().padStart(2, '0')).toLocaleString()}
-                          </div>
-                        </div>
-                      </DisclosurePanel>
-                    </Disclosure>
-                  )
-                )}
-                {/* buttons */}
-                {isFilterActive && (
-                  <Button
-                    type="button"
-                    onClick={handleRemoveFilter}
-                    variant="ghost"
-                    size="lg"
-                    className="border w-full mt-5 shadow-orange-500 border-orange-600 text-orange-600 rounded-[5px]  hover:bg-orange-500 hover:text-white transition-all duration-300 ease-in-out underline-0 cursor-pointer"
-                  >
-                    Remove Filter's
-                  </Button>
-                )}
+                <FilterPanel />
               </form>
 
               {/* Product grid */}
-              <div className="lg:col-span-3   ">
+              <div className="lg:col-span-3">
                 <div className="flex justify-between items-center mb-4">
                   <p className="font-bold text-2xl border-l-4 border-gray-800 pl-3 tracking-tight text-gray-800">
                     Results
                   </p>
                   <p className="text-sm text-gray-600 font-medium">{total || 0} Requirements</p>
                 </div>
-                {/* className='shadow-sm rounded-2xl p-6 border' */}
+
                 <div className="min-h-[300px]">
-                  {key.length > 0 && products.length == 0 ? (
-                    <div className="flex justify-center items-center h-full flex-col space-y-2">
-                      <img src="empty-cart.webp" alt="" className="h-28 w-28" />
-                      <p className="text-lg  text-center">No Item Found</p>
+                  {/* ── LOADING: show skeletons ── */}
+                  {isLoading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {new Array(6).fill(0).map((_, i) => (
+                        <ProductListingCardSkeleton key={`init-skeleton-${i}`} />
+                      ))}
+                    </div>
+                  ) : products.length === 0 ? (
+                    /* ── EMPTY: no results ── */
+                    <div className="flex justify-center items-center h-64 flex-col space-y-2">
+                      <img src="empty-cart.webp" alt="No results" className="h-28 w-28" />
+                      <p className="text-lg text-center text-gray-500">No Item Found</p>
                     </div>
                   ) : (
+                    /* ── DATA: infinite scroll list ── */
                     <InfiniteScroll
                       dataLength={products.length}
                       next={fetchMoreData}
                       hasMore={hasMore}
                       loader={
-                        <>
-                          {new Array(4).fill(0).map((_, index) => (
-                            <ProductListingCardSkeleton key={`skeleton-${index}`} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                          {new Array(2).fill(0).map((_, i) => (
+                            <ProductListingCardSkeleton key={`more-skeleton-${i}`} />
                           ))}
-                        </>
+                        </div>
                       }
                       className="grid grid-cols-1 sm:grid-cols-2 gap-4"
                     >

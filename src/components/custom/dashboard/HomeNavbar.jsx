@@ -771,7 +771,13 @@ const HomeNavbar = () => {
 
             {/* Profile Button */}
             <Button onClick={handleProfileClick} size="icon" className="cursor-pointer bc">
-              {!user ? <UserRound className="w-5 h-5" /> : fallBackName(mergeName(user))}
+              {!user ? (
+                <UserRound className="w-5 h-5" />
+              ) : user && !user?.firstName && !user?.lastNme ? (
+                <UserRound className="w-5 h-5" />
+              ) : (
+                fallBackName(mergeName(user))
+              )}
             </Button>
           </nav>
 

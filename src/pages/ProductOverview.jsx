@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import requirementService from '@/services/requirement.service';
 
 //  for other brand value condition
 
@@ -81,7 +82,7 @@ const ProductOverview = () => {
     data: createBidRes,
     loading: createBidLoading,
   } = useFetch(bidService.createBid);
-  const { fn: createRequirementFn } = useFetch(bidService.createRequirement);
+  const { fn: createRequirementFn } = useFetch(requirementService.createRequirement);
   const {
     fn: addToCartFn,
     data: addToCartRes,
@@ -192,6 +193,11 @@ const ProductOverview = () => {
 
   async function onSubmit(data) {
     const user = userProfile;
+    if (!user?.firstName?.trim() || !user?.lastName?.trim() || !user?.address?.trim()) {
+      navigate('/account');
+      toast.info('Please complete your profile first');
+      return;
+    }
     const currentFormData = getValues();
     if (!user?._id) {
       localStorage.setItem('preLoginBidForm', JSON.stringify(currentFormData));

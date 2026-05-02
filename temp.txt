@@ -6,3 +6,5 @@ Category === CreateProductForm
 
 
 // Check the flow add bid like correct ids set or not
+
+// requirement reladted issue when i am creating a bid 

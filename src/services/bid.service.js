@@ -21,5 +21,30 @@ class BidService {
       })
       .then(res => res.data?.data || res.data);
   }
+  async getAllBids(limit = 10, page = 1, search = '', sortBy = 'desc') {
+    return instance
+      .get('/bid/get-all-bid', {
+        params: {
+          limit,
+          page,
+          search,
+          sortBy,
+        },
+      })
+      .then(res => res.data?.data || res.data);
+  }
+  async getBidById(id, limit = 10, page = 1, search = '', sortBy = 'desc') {
+    return instance
+      .get(`/bid/bid-details/${id}`, {
+        withCredentials: true,
+        params: {
+          limit,
+          page,
+          search,
+          sortBy,
+        },
+      })
+      .then(res => res.data?.data || res.data);
+  }
 }
 export default new BidService();
