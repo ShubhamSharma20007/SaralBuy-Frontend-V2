@@ -47,6 +47,7 @@ import { getCategorySpecificFields } from '@/const/categoriesFormdataFields';
 import Authentication from '@/components/custom/auth/Authenticate';
 import TooltipComp from '@/lib/TooltipComp';
 import productService from '@/services/product.service';
+import PlaceRequirementPopup from '@/components/custom/popups/PlaceRequirementPopup';
 const innerFormImages = {
   automobile: 'automobileFormImage.png',
   fashion: 'fashionFormImage.png',
@@ -671,6 +672,9 @@ const CreateProductForm = () => {
   const [subCategoriesData, setSubCategoriesData] = useState([]);
   const [image, setImage] = useState(null);
   const [fileDoc, setFileDoc] = useState(null);
+  const [bidPopUpOpen, setBidPopUpOpen] = useState(false);
+  const [bidDuration, setBidDuration] = useState('');
+  const [buttonType, setButtonType] = useState(false);
 
   const { watch, setValue, register, getValues } = useForm({
     resolver: zodResolver(CategoryFormSchema),
@@ -760,7 +764,7 @@ const CreateProductForm = () => {
     return true;
   };
 
-  const handleSubmit = async isDraft => {
+  const handleSubmit = async (isDraft, resolvedBidDuration) => {
     if (!user) {
       setOpen(true);
       return;
@@ -833,6 +837,9 @@ const CreateProductForm = () => {
     multipartData.append('draft', isDraft);
     multipartData.append('categoryId', categoryId);
     multipartData.append('subCategoryId', formData.subCategoryId || subCategoryId);
+    if (!isDraft && resolvedBidDuration) {
+      multipartData.append('bidActiveDuration', resolvedBidDuration);
+    }
 
     await createProduct(categoryId, subCategoryId, multipartData);
     toast.success(`Form ${isDraft ? 'saved as draft' : 'submitted'} successfully!`);
@@ -847,7 +854,15 @@ const CreateProductForm = () => {
     <>
       <Authentication setOpen={setOpen} open={open} />
       <div className="w-full max-w-7xl mx-auto p-4">
-        {/* ... breadcrumb unchanged ... */}
+        <PlaceRequirementPopup
+          buttonType={buttonType}
+          loading={addProductLoading}
+          open={bidPopUpOpen}
+          setOpen={setBidPopUpOpen}
+          setBidDuration={setBidDuration}
+          bidDuration={bidDuration}
+          createProductFn={handleSubmit}
+        />
 
         <CategoryForm
           currentCategoryName={currentCategoryName}
@@ -879,7 +894,7 @@ const CreateProductForm = () => {
             type="button"
             disabled={addProductLoading}
             className="text-white w-32 cursor-pointer bg-orange-600 border-primary-btn border-2"
-            onClick={() => handleSubmit(false)}
+            onClick={() => setBidPopUpOpen(true)}
           >
             Submit
           </Button>

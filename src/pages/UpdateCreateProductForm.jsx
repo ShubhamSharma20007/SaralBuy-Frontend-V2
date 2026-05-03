@@ -47,6 +47,7 @@ import Authentication from '@/components/custom/auth/Authenticate';
 import TooltipComp from '@/lib/TooltipComp';
 import { Spinner } from '@/components/ui/spinner';
 import { CategoryFormSkeleton } from '@/const/CustomSkeletons';
+import PlaceRequirementPopup from '@/components/custom/popups/PlaceRequirementPopup';
 
 const innerFormImages = {
   automobile: 'automobileFormImage.png',
@@ -731,6 +732,9 @@ const UpdateCreateProductForm = () => {
   const navigate = useNavigate();
   const { user } = useUserState();
   const [open, setOpen] = useState(false);
+  const [bidPopUpOpen, setBidPopUpOpen] = useState(false);
+  const [bidDuration, setBidDuration] = useState('');
+  const [buttonType, setButtonType] = useState(false);
 
   const {
     fn: getDraft,
@@ -882,7 +886,7 @@ const UpdateCreateProductForm = () => {
   };
 
   // ── Submit — same pattern as CreateProductForm ────────────────────────────
-  const handleSubmit = async isDraft => {
+  const handleSubmit = async (isDraft, resolvedBidDuration) => {
     if (!user) {
       setOpen(true);
       return;
@@ -948,6 +952,7 @@ const UpdateCreateProductForm = () => {
       multipartData.append('createRequirement', 'false');
       await saveAsDraftFn(multipartData, false);
     } else {
+      if (resolvedBidDuration) multipartData.append('bidActiveDuration', resolvedBidDuration);
       multipartData.append('createRequirement', 'true');
       await updateDraft(multipartData, false);
     }
@@ -981,6 +986,15 @@ const UpdateCreateProductForm = () => {
   return (
     <>
       <Authentication setOpen={setOpen} open={open} />
+      <PlaceRequirementPopup
+        buttonType={buttonType}
+        loading={updateLoading}
+        open={bidPopUpOpen}
+        setOpen={setBidPopUpOpen}
+        setBidDuration={setBidDuration}
+        bidDuration={bidDuration}
+        createProductFn={handleSubmit}
+      />
 
       <div className="w-full max-w-7xl mx-auto p-4 min-h-screen">
         {getDraftLoading ? (
@@ -1041,7 +1055,7 @@ const UpdateCreateProductForm = () => {
               <Button
                 type="button"
                 className="text-white w-32 cursor-pointer bg-orange-600 border-primary-btn border-2"
-                onClick={() => handleSubmit(false)}
+                onClick={() => setBidPopUpOpen(true)}
                 disabled={updateLoading}
               >
                 {/* {updateLoading ? <Spinner className="w-5 h-5 animate-spin" /> : 'Submit'}
