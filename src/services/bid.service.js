@@ -46,5 +46,10 @@ class BidService {
       })
       .then(res => res.data?.data || res.data);
   }
+  async getbidByProductId(productId) {
+    return instance
+      .get(`/bid/get-bid-by-productId/${productId}`)
+      .then(res => res.data?.data || res.data);
+  }
 }
 export default new BidService();

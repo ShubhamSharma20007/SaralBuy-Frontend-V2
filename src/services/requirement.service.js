@@ -8,5 +8,22 @@ class RequirementService {
   async createRequirement(params) {
     return instance.post('/requirement/create', params).then(res => res.data?.data || res.data);
   }
+  async getMyRequirements(page = 1, limit = 10) {
+    return instance
+      .get('/requirement/my-requirements', {
+        params: {
+          page,
+          limit,
+        },
+      })
+      .then(res => res.data?.data || res.data);
+  }
+  async getApprovedPendingRequirements() {
+    return instance.get('/requirement/approved-pending').then(res => res.data?.data || res.data);
+  }
+
+  async getCompletedApprovedRequirements() {
+    return instance.get('/requirement/completed-approved').then(res => res.data?.data || res.data);
+  }
 }
 export default new RequirementService();

@@ -7,4 +7,14 @@ Category === CreateProductForm
 
 // Check the flow add bid like correct ids set or not
 
-// requirement reladted issue when i am creating a bid 
+// requirement reladted issue when i am creating a bid
+
+
+Point-2 
+ager requiremment hai product ager mai add to cart karta hu to us time vo add to cart nhi hona chaiye..
+
+
+Point -3
+ager main bid lagyi to mere home requiremnet mai dikega and same buyer kai home requirement mai dikega
+and Buyer kai profile requiremnet  mai vo product dikega but saller kai nhi dikega ??
+

@@ -33,5 +33,31 @@ class ProductService {
       .get('/product/get-product-by-id/' + productId)
       .then(res => res.data?.data || res.data);
   }
+  async getDrafts(page = 1, limit = 10) {
+    return instance
+      .get('/product/get-draft-products', {
+        params: {
+          page,
+          limit,
+        },
+      })
+      .then(res => res.data?.data || res.data);
+  }
+  async deleteDraft(productId) {
+    return instance
+      .delete(`/product/delete-draft-product/${productId}`)
+      .then(res => res.data?.data || res.data);
+  }
+  async getDraftById(productId) {
+    return instance
+      .get('/product/get-draft-product/' + productId)
+      .then(res => res.data?.data || res.data);
+  }
+  async updateDrafts(payload) {
+    return instance.patch(`/product/updatedraft`, payload).then(res => res.data?.data || res.data);
+  }
+  async saveAsDraft(payload) {
+    return instance.put(`/product/save_as_draft`, payload).then(res => res.data?.data || res.data);
+  }
 }
 export default new ProductService();

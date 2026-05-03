@@ -13,6 +13,9 @@ import { AccountSettings } from './pages/profile/AccountSetting';
 import Cart from './pages/profile/Cart';
 import BidListing from './pages/profile/BidListing';
 import BidOverview from './pages/profile/BidOverview';
+import Requirements from './pages/profile/Requirements';
+import CloseDeal from './pages/profile/CloseDeal';
+import UpdateCreateProductForm from './pages/UpdateCreateProductForm';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -48,18 +51,17 @@ export default function AppRoutes() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/requirement" element={<Requirement />} />
           <Route path="/category/:categoryId/:subCategoryId" element={<CreateProductForm />} />
+          <Route path="/update-draft/:productId" element={<UpdateCreateProductForm />} />
           <Route path="/product-listing" element={<ProductListing />} />
           <Route path="/product-overview" element={<ProductOverview />} />
-          <Route path="*" element={<h1>No Route Found</h1>} />
-
           {/*  account */}
           <Route path="/account" element={<Profile />}>
             <Route index element={<AccountSettings />} />
             <Route path="cart" element={<Cart />} />
             <Route path="bid" element={<BidListing />} />
-
-            {/* <Route path="deal" element={<Deal />} />
-            <Route path="requirements" element={<BidRequirements />} />
+            <Route path="requirements" element={<Requirements />} />
+            <Route path="deal" element={<CloseDeal />} />
+            {/* 
             <Route
               path="requirements/:requirementId"
               element={<RequirementOverview />}
@@ -67,6 +69,8 @@ export default function AppRoutes() {
             {/* <Route path="notification" element={<Notification />} /> */}
           </Route>
           <Route path="/bid-overview/:bidId" element={<BidOverview />} />
+
+          <Route path="*" element={<h1>No Route Found</h1>} />
         </Routes>
       </Suspense>
       <Footer />

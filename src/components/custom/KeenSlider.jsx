@@ -1,4 +1,5 @@
 import { dateFormatter } from '@/utils/dateFormatter';
+import { mergeName } from '@/utils/mergerName';
 
 const KeenSlider = ({ product, target }) => {
   product = product.product || product || {};
@@ -26,15 +27,23 @@ const KeenSlider = ({ product, target }) => {
             <div>
               <span className="cc">{product?.categoryId?.categoryName}</span>
             </div>
-            <p className=" capitalize line-clamp-1 font-semibold">{product.title}</p>
-            <p>
-              Delivery By:{' '}
-              <strong>
-                {dateFormatter(product?.paymentAndDelivery?.ex_deliveryDate) || 'N/A'}
-              </strong>
+            <p className="flex gap-1 item-center">
+              Product:{' '}
+              <strong className="capitalize line-clamp-1 font-semibold">{product.title}</strong>
             </p>
-            <p>
-              QTY: <strong>{product.quantity || 'N/A'}</strong>
+            {product?.buyerId && (
+              <p className="flex gap-1 item-center">
+                Delivery By:{' '}
+                <strong className="capitalize">
+                  {mergeName(product?.buyerId) ||
+                    dateFormatter(product?.paymentAndDelivery?.ex_deliveryDate) ||
+                    'N/A'}
+                </strong>
+              </p>
+            )}
+
+            <p className="flex gap-1 item-center">
+              QTY: <strong>{product.quantity || 0}</strong>
             </p>
           </div>
         </div>

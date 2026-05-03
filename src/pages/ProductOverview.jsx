@@ -76,7 +76,7 @@ const ProductOverview = () => {
     fn: getBidByProductIdFn,
     data: getBidByProductIdRes,
     loading: getBidByProductIdLoading,
-  } = useFetch(productService.getbidByProductId);
+  } = useFetch(bidService.getbidByProductId);
   const {
     fn: createBidFn,
     data: createBidRes,

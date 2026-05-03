@@ -206,27 +206,6 @@ const MOCK_NOTIFICATIONS = [
   },
 ];
 
-const MOCK_PRODUCTS = [
-  {
-    _id: 'p1',
-    title: 'Samsung Galaxy A54',
-    image: '',
-    description: '6.4 inch display, 128GB storage, 5000mAh battery',
-  },
-  {
-    _id: 'p2',
-    title: 'Wireless Headphones',
-    image: '',
-    description: 'Noise cancelling, 30hr battery, premium sound',
-  },
-  {
-    _id: 'p3',
-    title: 'Whirlpool 1.5 Ton AC',
-    image: '',
-    description: '5 star rated inverter AC, fast cooling technology',
-  },
-];
-
 // ─── Helper: notification icon resolver ──────────────────────────────────────
 
 function getNotifMeta(type) {
@@ -293,15 +272,8 @@ const HomeNavbar = () => {
   const [products, setProducts] = useState([]);
   const [value, { isPending, flush }] = useDebounce(text, 500);
   const [showDropdown, setShowDropdown] = React.useState(false);
-  const filteredProducts =
-    text.trim().length > 1
-      ? MOCK_PRODUCTS.filter(
-          p =>
-            p.title.toLowerCase().includes(text.toLowerCase()) ||
-            p.description.toLowerCase().includes(text.toLowerCase())
-        )
-      : [];
-  const isSearchPending = false; // replace with isPending() from your debounce hook
+
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
 
   // Popover open state
   const [showMessageDropdown, setShowMessageDropdown] = React.useState(false);
@@ -378,12 +350,12 @@ const HomeNavbar = () => {
         ref={productsRef}
         className="absolute right-0 w-full top-full mt-2 z-[99] max-h-[300px] overflow-y-auto bg-white rounded-lg shadow-lg p-2 space-y-2"
       >
-        {isSearchPending ? (
+        {isSearchLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-md w-full" />
           ))
-        ) : filteredProducts.length > 0 ? (
-          filteredProducts.map(p => (
+        ) : products.length > 0 ? (
+          products.map(p => (
             <Card
               key={p._id}
               className="p-2 rounded-xl shadow-md bg-white cursor-pointer hover:bg-gray-50"
@@ -424,20 +396,38 @@ const HomeNavbar = () => {
     }
   };
 
+  // useEffect(() => {
+  //   if (value.trim().length > 1) {
+  //     fn(value);
+  //     setShowDropdown(true);
+  //   } else {
+  //     setProducts([]);
+  //     setShowDropdown(false);
+  //   }
+  // }, [value]);
   useEffect(() => {
     if (value.trim().length > 1) {
-      fn(value);
+      setIsSearchLoading(true);
+      setProducts([]);
       setShowDropdown(true);
+      fn(value);
     } else {
       setProducts([]);
+      setIsSearchLoading(false);
       setShowDropdown(false);
     }
   }, [value]);
 
-  useEffect(() => {
-    setProducts(data);
-  }, [data]);
+  // useEffect(() => {
+  //   setProducts(data);
+  // }, [data]);
 
+  useEffect(() => {
+    if (data !== undefined) {
+      setProducts(data);
+      setIsSearchLoading(false);
+    }
+  }, [data]);
   useEffect(() => {
     function handleOutsideClick(event) {
       if (showDropdown && productsRef.current) {
@@ -505,7 +495,7 @@ const HomeNavbar = () => {
                   ref={productsRef}
                   className="absolute right-0  w-full top-full mt-2 z-[99] max-h-[300px]  overflow-y-auto bg-white rounded-lg shadow-lg p-2 space-y-2"
                 >
-                  {isPending() ? (
+                  {isSearchLoading ? (
                     Array.from({ length: 3 }).map((_, i) => (
                       <Skeleton key={i} className="h-20 rounded-md w-full" />
                     ))

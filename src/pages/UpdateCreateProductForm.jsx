@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { MoveLeft, CloudUpload, X, XIcon } from 'lucide-react';
+import { MoveLeft, CloudUpload, X, XIcon, File } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,7 +20,6 @@ import {
 } from '@/components/ui/select';
 import { DatePicker } from '@/lib/DatePicker';
 import { Range } from 'react-range';
-
 import { CategoryFormSchema } from '@/validations/Schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -29,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useFetch } from '@/hooks/use-fetch';
 import categoryService from '@/services/category.service';
+import productService from '@/services/product.service';
 import { useUserState } from '@/redux/hooks/useUser';
 import { SearchableDropdown } from '@/lib/SearchableDropdown';
 import {
@@ -46,7 +45,9 @@ import {
 import { getCategorySpecificFields } from '@/const/categoriesFormdataFields';
 import Authentication from '@/components/custom/auth/Authenticate';
 import TooltipComp from '@/lib/TooltipComp';
-import productService from '@/services/product.service';
+import { Spinner } from '@/components/ui/spinner';
+import { CategoryFormSkeleton } from '@/const/CustomSkeletons';
+
 const innerFormImages = {
   automobile: 'automobileFormImage.png',
   fashion: 'fashionFormImage.png',
@@ -60,6 +61,7 @@ const innerFormImages = {
   industrial: 'constructionFormImage.png',
   others: 'otherImage.webp',
 };
+
 function getSubCategories(categoryName) {
   switch (categoryName) {
     case 'automobile':
@@ -87,6 +89,7 @@ function getSubCategories(categoryName) {
   }
 }
 
+// ─── CategoryForm (same pattern as CreateProductForm) ────────────────────────
 const CategoryForm = ({
   currentCategoryName,
   catByIdData,
@@ -100,10 +103,19 @@ const CategoryForm = ({
   setImage,
   fileDoc,
   setFileDoc,
+  initialData, // for showing existing image/doc previews
 }) => {
-  const [values, setValues] = useState([0, 2]);
-  const [date, setDate] = useState(undefined);
-  const [brand, setbrand] = useState('');
+  console.log('INITIAL STATE OF UPDATE PRODUCT FORM------->', initialData);
+  const [values, setValues] = useState([
+    parseFloat(initialData?.oldProductValue?.min || '0'),
+    parseFloat(initialData?.oldProductValue?.max || '2'),
+  ]);
+  const [date, setDate] = useState(
+    initialData?.paymentAndDelivery?.ex_deliveryDate
+      ? new Date(initialData.paymentAndDelivery.ex_deliveryDate)
+      : undefined
+  );
+  const [brand, setbrand] = useState(initialData?.brand || '');
   const [brandRenderItems, setBrandRenderItems] = useState([]);
   const [subCatgoryName, setSubcategoryName] = useState('');
   const imageRef = useRef(null);
@@ -111,6 +123,7 @@ const CategoryForm = ({
 
   const gstField = watch('gst_requirement');
   const productField = watch('productType');
+  const selectedSubCategoryId = watch('subCategoryId');
   const paymentMode = watch('paymentAndDelivery.paymentMode');
   const genderValue = watch('gender');
   const fuelTypeValue = watch('fuelType');
@@ -118,6 +131,7 @@ const CategoryForm = ({
   const transmissionValue = watch('transmission');
   const conditionOfProductValue = watch('conditionOfProduct');
   const toolTypeValue = watch('toolType');
+  const rateAServiceValue = watch('rateAService');
 
   useEffect(() => {
     setValue('oldProductValue.min', values[0].toString());
@@ -129,13 +143,21 @@ const CategoryForm = ({
   }, [brand, setValue]);
 
   useEffect(() => {
-    if (brand !== 'other') setValue('brandName', '');
+    if (brand !== 'others') setValue('brandName', '');
+    else if (initialData?.brandName) setValue('brandName', initialData.brandName);
   }, [brand]);
 
   useEffect(() => {
-    if (subCategoryId && catByIdData) {
+    if (initialData?.brand) {
+      setbrand(initialData?.brand);
+    }
+  }, [initialData]);
+
+  // Populate brands when subCategory changes
+  useEffect(() => {
+    if (selectedSubCategoryId && catByIdData) {
       const selectProductName =
-        catByIdData?.subCategories.find(item => item._id === subCategoryId)?.name || 'N/A';
+        catByIdData?.subCategories.find(item => item._id === selectedSubCategoryId)?.name || 'N/A';
       const brandsArray = subCategoriesData.find(
         item =>
           item.category.replace(/\s+/g, '').toLowerCase() ===
@@ -143,9 +165,18 @@ const CategoryForm = ({
       )?.brands;
       setSubcategoryName(selectProductName);
       if (brandsArray?.length > 0) setBrandRenderItems(brandsArray);
-      setValue('subCategoryId', subCategoryId);
     }
-  }, [subCategoryId, catByIdData, subCategoriesData]);
+  }, [selectedSubCategoryId, catByIdData, subCategoriesData]);
+
+  // On mount: set initial subCategoryId
+  useEffect(() => {
+    if (subCategoryId) setValue('subCategoryId', subCategoryId);
+  }, [subCategoryId]);
+
+  const previewDoc = url => {
+    if (url) window.open(url, '_blank');
+  };
+
   return (
     <div className="relative">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -154,8 +185,7 @@ const CategoryForm = ({
           <div className="col-span-1 align-center sm:block flex flex-col justify-center">
             <h2 className="text-[15px] font-semibold mb-2 text-center">Tell us about your need</h2>
             <p className="text-[13px] text-muted-foreground text-center">
-              Please help us tailor the experience by filling out the form below. If this isn't the
-              category you meant to choose, you can go back and select another one.
+              Update your product details below. Make sure all required fields are filled correctly.
             </p>
           </div>
           <div className="col-span-1 w-full">
@@ -169,16 +199,21 @@ const CategoryForm = ({
         </div>
 
         <div className="col-span-2 md:col-span-2 flex flex-col gap-3">
+          {/* ── Product Details ── */}
           <div className="rounded-[5px] p-6 bg-gray-200/50">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               <Input
                 type="text"
-                placeholder="Title* (Give a short title for your post - specify your required product in 3–4 words)"
+                placeholder="Title* (Give a short title for your post)"
                 className="bg-white col-span-1 md:col-span-3"
                 {...register('title')}
               />
 
-              <Select defaultValue={subCategoryId} disabled>
+              {/* SubCategory — editable (unlike CreateProductForm where it's disabled) */}
+              <Select
+                value={selectedSubCategoryId}
+                onValueChange={value => setValue('subCategoryId', value)}
+              >
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Category*" />
                 </SelectTrigger>
@@ -206,9 +241,7 @@ const CategoryForm = ({
                   type="text"
                   placeholder="Brand Name..."
                   value={brand}
-                  onChange={e => {
-                    setbrand(e.target.value);
-                  }}
+                  onChange={e => setbrand(e.target.value)}
                   className="bg-white"
                 />
               )}
@@ -236,15 +269,28 @@ const CategoryForm = ({
 
               {currentCategoryName !== 'service' && (
                 <Input
-                  type="string"
+                  type="text"
                   placeholder="Quantity*"
                   {...register('quantity')}
                   className="bg-white col-span-1"
                 />
               )}
 
+              {currentCategoryName === 'service' && (
+                <Select value={rateAServiceValue} onValueChange={v => setValue('rateAService', v)}>
+                  <SelectTrigger className="w-full bg-white">
+                    <SelectValue placeholder="Rate a Service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="average">Average</SelectItem>
+                    <SelectItem value="bad">Bad</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+
               {currentCategoryName === 'fashion' && (
-                <Select value={genderValue} onValueChange={value => setValue('gender', value)}>
+                <Select value={genderValue} onValueChange={v => setValue('gender', v)}>
                   <SelectTrigger className="w-full bg-white">
                     <SelectValue placeholder="Gender" />
                   </SelectTrigger>
@@ -259,10 +305,7 @@ const CategoryForm = ({
               {currentCategoryName === 'automobile' &&
                 !['accessories', 'bicycles'].includes(subCatgoryName.toLowerCase()) && (
                   <>
-                    <Select
-                      value={fuelTypeValue}
-                      onValueChange={value => setValue('fuelType', value)}
-                    >
+                    <Select value={fuelTypeValue} onValueChange={v => setValue('fuelType', v)}>
                       <SelectTrigger className="w-full bg-white">
                         <SelectValue placeholder="Fuel Type" />
                       </SelectTrigger>
@@ -290,9 +333,7 @@ const CategoryForm = ({
                         type="text"
                         placeholder="Color"
                         value={colorValue}
-                        onChange={e => {
-                          setValue('color', e.target.value);
-                        }}
+                        onChange={e => setValue('color', e.target.value)}
                       />
                     )}
 
@@ -301,7 +342,7 @@ const CategoryForm = ({
                     ) && (
                       <Select
                         value={transmissionValue}
-                        onValueChange={value => setValue('transmission', value)}
+                        onValueChange={v => setValue('transmission', v)}
                       >
                         <SelectTrigger className="w-full bg-white">
                           <SelectValue placeholder="Transmission" />
@@ -333,10 +374,7 @@ const CategoryForm = ({
                 currentCategoryName !== 'others' && (
                   <>
                     {(productField === 'new_product' || productField === '') && (
-                      <Select
-                        value={productField}
-                        onValueChange={value => setValue('productType', value)}
-                      >
+                      <Select value={productField} onValueChange={v => setValue('productType', v)}>
                         <SelectTrigger className="w-full bg-white">
                           <SelectValue placeholder="Product Condition" />
                         </SelectTrigger>
@@ -348,77 +386,73 @@ const CategoryForm = ({
                     )}
 
                     {productField === 'old_product' && (
-                      <>
-                        <div className="w-full max-w-md border-[1.5px] border-gray-200 rounded-lg bg-white p-3">
-                          <div className="flex justify-between items-center mb-3">
-                            <Label className="font-medium text-gray-500">
-                              Old Product <sup className="hidden sm:block">(in Years)</sup>
-                            </Label>
-                            <XIcon
-                              className="w-4 h-4 text-gray-400 cursor-pointer"
-                              onClick={() => setValue('productType', 'new_product')}
-                            />
-                          </div>
-                          <Range
-                            values={values}
-                            step={0.1}
-                            min={0}
-                            max={20}
-                            onChange={vals => setValues(vals)}
-                            renderTrack={({ props, children }) => (
-                              <div {...props} className="h-1 w-full bg-gray-300 rounded relative">
-                                <div
-                                  className="absolute h-1 bg-orange-600 rounded"
-                                  style={{
-                                    left: `${(values[0] / 20) * 100}%`,
-                                    width: `${((values[1] - values[0]) / 20) * 100}%`,
-                                  }}
-                                />
-                                {children}
-                              </div>
-                            )}
-                            renderThumb={({ props }) => (
-                              <div
-                                {...props}
-                                className="w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center shadow"
-                              />
-                            )}
+                      <div className="w-full max-w-md border-[1.5px] border-gray-200 rounded-lg bg-white p-3">
+                        <div className="flex justify-between items-center mb-3">
+                          <Label className="font-medium text-gray-500">
+                            Old Product <sup className="hidden sm:block">(in Years)</sup>
+                          </Label>
+                          <XIcon
+                            className="w-4 h-4 text-gray-400 cursor-pointer"
+                            onClick={() => setValue('productType', 'new_product')}
                           />
-                          <div className="flex justify-between items-center mt-3 text-sm">
-                            <div className="flex items-center gap-2">
-                              <Label className="text-gray-600 text-sm hidden sm:block">Min.</Label>
-                              <div className="flex items-center gap-1 border rounded px-2 py-1">
-                                {values[0].toString().padStart(2, '0')}
-                              </div>
+                        </div>
+                        <Range
+                          values={values}
+                          step={0.1}
+                          min={0}
+                          max={20}
+                          onChange={vals => setValues(vals)}
+                          renderTrack={({ props, children }) => (
+                            <div {...props} className="h-1 w-full bg-gray-300 rounded relative">
+                              <div
+                                className="absolute h-1 bg-orange-600 rounded"
+                                style={{
+                                  left: `${(values[0] / 20) * 100}%`,
+                                  width: `${((values[1] - values[0]) / 20) * 100}%`,
+                                }}
+                              />
+                              {children}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1 border rounded px-2 py-1">
-                                {values[1]}
-                              </div>
-                              <Label className="text-gray-600 text-sm hidden sm:block">Max.</Label>
+                          )}
+                          renderThumb={({ props }) => (
+                            <div
+                              {...props}
+                              className="w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center shadow"
+                            />
+                          )}
+                        />
+                        <div className="flex justify-between items-center mt-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Label className="text-gray-600 text-sm hidden sm:block">Min.</Label>
+                            <div className="flex items-center gap-1 border rounded px-2 py-1">
+                              {values[0].toString().padStart(2, '0')}
                             </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 border rounded px-2 py-1">
+                              {values[1]}
+                            </div>
+                            <Label className="text-gray-600 text-sm hidden sm:block">Max.</Label>
                           </div>
                         </div>
-                      </>
+                      </div>
                     )}
                   </>
                 )}
 
               {currentCategoryName === 'others' && (
-                <>
-                  <Input
-                    type="text"
-                    placeholder="Product Condition"
-                    {...register('productCondition')}
-                    className="bg-white"
-                  />
-                </>
+                <Input
+                  type="text"
+                  placeholder="Product Condition"
+                  {...register('productCondition')}
+                  className="bg-white"
+                />
               )}
 
               {productField === 'new_product' && currentCategoryName === 'furniture' && (
                 <Select
                   value={conditionOfProductValue}
-                  onValueChange={value => setValue('conditionOfProduct', value)}
+                  onValueChange={v => setValue('conditionOfProduct', v)}
                 >
                   <SelectTrigger className="w-full bg-white">
                     <SelectValue placeholder="Product Condition" />
@@ -456,7 +490,7 @@ const CategoryForm = ({
               />
 
               {currentCategoryName === 'industrial' && (
-                <Select value={toolTypeValue} onValueChange={value => setValue('toolType', value)}>
+                <Select value={toolTypeValue} onValueChange={v => setValue('toolType', v)}>
                   <SelectTrigger className="w-full bg-white">
                     <SelectValue placeholder="Tool Type" />
                   </SelectTrigger>
@@ -469,6 +503,7 @@ const CategoryForm = ({
             </div>
           </div>
 
+          {/* ── Other Details ── */}
           <div className="rounded-[5px] p-6 bg-gray-200/50">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-700">Other Details</h3>
@@ -478,6 +513,7 @@ const CategoryForm = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Image upload */}
               <div
                 onClick={() => imageRef?.current?.click()}
                 className="border-2 border-dashed relative border-gray-300 rounded-lg flex bg-transparent flex-col items-center justify-center p-6 cursor-pointer h-32"
@@ -503,6 +539,7 @@ const CategoryForm = ({
                 />
                 {image && <p className="text-xs mt-2 text-green-600">{image?.name}</p>}
 
+                {/* Preview new image */}
                 {image && (
                   <div className="absolute h-16 w-16 right-2 top-2 rounded-lg shadow select-none z-10 group">
                     <img
@@ -522,15 +559,28 @@ const CategoryForm = ({
                     </div>
                   </div>
                 )}
+
+                {/* Show existing image from server if no new one selected */}
+                {!image && initialData?.image && (
+                  <div className="absolute h-16 w-16 right-2 top-2 rounded-lg shadow select-none z-10 group">
+                    <img
+                      src={initialData.image}
+                      className="h-full w-full bg-white object-contain rounded-sm"
+                      alt="existing"
+                    />
+                  </div>
+                )}
               </div>
 
+              {/* Document upload */}
               <div
                 onClick={() => fileDocRef.current?.click()}
                 className="border-2 border-dashed relative border-gray-300 rounded-lg flex bg-transparent flex-col items-center justify-center p-6 cursor-pointer"
               >
                 <CloudUpload className="h-6 w-6 mb-2 text-gray-500" />
                 <span className="text-sm text-muted-foreground text-center">
-                  <span className="font-semibold">Browse From Device</span> <br />
+                  <span className="font-semibold">Browse From Device</span>
+                  <br />
                   <span className="text-xs">to upload your doc/pdf (max 5 MB)</span>
                 </span>
                 <input
@@ -555,6 +605,25 @@ const CategoryForm = ({
                 />
                 {fileDoc && <p className="text-xs mt-2 text-green-600">{fileDoc.name}</p>}
 
+                {/* Show existing doc from server */}
+                {!fileDoc && initialData?.document && (
+                  <>
+                    <div
+                      className="absolute top-2 right-2 z-10 bg-orange-100 text-orange-500 rounded-sm p-1 cursor-pointer"
+                      onClick={e => {
+                        e.stopPropagation();
+                        previewDoc(initialData.document);
+                      }}
+                    >
+                      <TooltipComp
+                        hoverChildren={<File className="h-4 w-4" />}
+                        contentChildren={<p>View Document</p>}
+                      />
+                    </div>
+                    <p className="text-xs mt-2 text-blue-600">Current document uploaded</p>
+                  </>
+                )}
+
                 {fileDoc && (
                   <div
                     className="absolute top-2 right-2 z-10 bg-orange-100 text-orange-500 rounded-sm p-1 cursor-pointer"
@@ -572,6 +641,7 @@ const CategoryForm = ({
                 )}
               </div>
             </div>
+
             <Textarea
               placeholder="Description*"
               {...register('description')}
@@ -579,13 +649,14 @@ const CategoryForm = ({
             />
           </div>
 
+          {/* ── Payment & Delivery ── */}
           <div className="rounded-[5px] p-6 bg-gray-200/50">
             <h3 className="text-lg font-semibold mb-4 text-gray-700">Payment & Delivery Details</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               <DatePicker
                 date={date}
                 title="Delivery Date"
-                disabledBeforeDate={new Date(new Date().getTime())}
+                disabledBeforeDate={new Date()}
                 setDate={val => {
                   if (val) {
                     setDate(val);
@@ -596,7 +667,7 @@ const CategoryForm = ({
 
               <Select
                 value={paymentMode}
-                onValueChange={value => setValue('paymentAndDelivery.paymentMode', value)}
+                onValueChange={v => setValue('paymentAndDelivery.paymentMode', v)}
               >
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Payment Mode" />
@@ -608,7 +679,7 @@ const CategoryForm = ({
                 </SelectContent>
               </Select>
 
-              <Select value={gstField} onValueChange={value => setValue('gst_requirement', value)}>
+              <Select value={gstField} onValueChange={v => setValue('gst_requirement', v)}>
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="GST Input Required" />
                 </SelectTrigger>
@@ -627,8 +698,7 @@ const CategoryForm = ({
                     className="bg-white"
                     maxLength={15}
                     onChange={e => {
-                      const value = e.target.value.toUpperCase();
-                      setValue('paymentAndDelivery.gstNumber', value, {
+                      setValue('paymentAndDelivery.gstNumber', e.target.value.toUpperCase(), {
                         shouldValidate: true,
                       });
                     }}
@@ -655,23 +725,38 @@ const CategoryForm = ({
   );
 };
 
-const CreateProductForm = () => {
+// ─── UpdateCreateProductForm ──────────────────────────────────────────────────
+const UpdateCreateProductForm = () => {
+  const { productId } = useParams();
   const navigate = useNavigate();
-  const { categoryId, subCategoryId } = useParams();
-  const [subCategroies, setSubCategoies] = useState([]);
-  const { fn: getCatByIdFn, data: catByIdData } = useFetch(categoryService.getCategoriesById);
-  const {
-    fn: createProduct,
-    data: createProductRes,
-    loading: addProductLoading,
-  } = useFetch(productService.addProduct);
-  const [currentCategoryName, setCurrentCategoryName] = useState(null);
   const { user } = useUserState();
   const [open, setOpen] = useState(false);
+
+  const {
+    fn: getDraft,
+    data: getDraftRes,
+    loading: getDraftLoading,
+  } = useFetch(productService.getDraftById);
+  const {
+    fn: updateDraft,
+    data: updateDraftRes,
+    loading: updateLoading,
+  } = useFetch(productService.updateDrafts);
+  const {
+    fn: saveAsDraftFn,
+    data: saveAsDraftRes,
+    loading: saveAsDraftLoading,
+  } = useFetch(productService.saveAsDraft);
+  const { fn: getCatByIdFn, data: catByIdData } = useFetch(categoryService.getCategoriesById);
+
+  const [draftState, setDraftState] = useState(null);
+  const [subCategroies, setSubCategoies] = useState([]);
+  const [currentCategoryName, setCurrentCategoryName] = useState(null);
   const [subCategoriesData, setSubCategoriesData] = useState([]);
   const [image, setImage] = useState(null);
   const [fileDoc, setFileDoc] = useState(null);
 
+  // ── useForm — same pattern as CreateProductForm ───────────────────────────
   const { watch, setValue, register, getValues } = useForm({
     resolver: zodResolver(CategoryFormSchema),
     defaultValues: {
@@ -711,24 +796,60 @@ const CreateProductForm = () => {
     },
   });
 
+  // ── Load draft ────────────────────────────────────────────────────────────
   useEffect(() => {
-    (async () => await getCatByIdFn(categoryId))();
-  }, [categoryId]);
+    if (productId) getDraft(productId);
+  }, [productId]);
 
   useEffect(() => {
-    if (catByIdData) {
-      try {
-        const decodedCategoryName = decodeURIComponent(catByIdData?.categoryName).toLowerCase();
-        setSubCategoriesData(getSubCategories(decodedCategoryName));
-        setCurrentCategoryName(decodedCategoryName || null);
-      } catch (e) {
-        console.error('Error decoding category name:', e);
-        setCurrentCategoryName(null);
-      }
-      setSubCategoies(catByIdData?.subCategories || []);
-    }
+    if (!getDraftRes) return;
+    setDraftState(getDraftRes);
+    setCurrentCategoryName(getDraftRes?.categoryId?.categoryName?.toLowerCase() || null);
+    if (getDraftRes?.categoryId?._id) getCatByIdFn(getDraftRes.categoryId._id);
+
+    // Pre-fill form with existing draft data
+    const d = getDraftRes;
+    const fields = {
+      title: d.title || '',
+      quantity: d.quantity || '',
+      subCategoryId: d.subCategoryId || '',
+      minimumBudget: d.minimumBudget || '',
+      productType: d.productType || '',
+      oldProductValue: d.oldProductValue || { min: '', max: '' },
+      productCondition: d.productCondition || '',
+      description: d.description || '',
+      brand: d.brand || '',
+      brandName: d.brandName || '',
+      gender: d.gender || '',
+      fuelType: d.fuelType || '',
+      model: d.model || '',
+      color: d.color || '',
+      transmission: d.transmission || '',
+      conditionOfProduct: d.conditionOfProduct || '',
+      toolType: d.toolType || '',
+      rateAService: d.rateAService || '',
+      typeOfVehicle: d.typeOfVehicle || '',
+      typeOfProduct: d.typeOfProduct || '',
+      gst_requirement: d.paymentAndDelivery?.gstNumber ? 'yes' : '',
+      paymentAndDelivery: {
+        ex_deliveryDate: d.paymentAndDelivery?.ex_deliveryDate || undefined,
+        paymentMode: d.paymentAndDelivery?.paymentMode || '',
+        gstNumber: d.paymentAndDelivery?.gstNumber || '',
+        organizationName: d.paymentAndDelivery?.organizationName || '',
+        organizationAddress: d.paymentAndDelivery?.organizationAddress || '',
+      },
+    };
+    Object.entries(fields).forEach(([key, val]) => setValue(key, val));
+  }, [getDraftRes]);
+
+  useEffect(() => {
+    if (!catByIdData) return;
+    const name = currentCategoryName || '';
+    setSubCategoriesData(getSubCategories(name));
+    setSubCategoies(catByIdData?.subCategories || []);
   }, [catByIdData]);
 
+  // ── Validation — same as CreateProductForm ───────────────────────────────
   const validateForm = (formData, isDraft) => {
     const gstRegex = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}$/;
     if (!formData.title) {
@@ -739,11 +860,11 @@ const CreateProductForm = () => {
       toast.error('Category is required');
       return false;
     }
-    if (!formData.brand && currentCategoryName?.toLowerCase() !== 'service' && !isDraft) {
+    if (!formData.brand && currentCategoryName !== 'service' && !isDraft) {
       toast.error('Brand is required');
       return false;
     }
-    if (!formData.quantity && currentCategoryName?.toLowerCase() !== 'service' && !isDraft) {
+    if (!formData.quantity && currentCategoryName !== 'service' && !isDraft) {
       toast.error('Quantity is required');
       return false;
     }
@@ -760,25 +881,14 @@ const CreateProductForm = () => {
     return true;
   };
 
+  // ── Submit — same pattern as CreateProductForm ────────────────────────────
   const handleSubmit = async isDraft => {
     if (!user) {
       setOpen(true);
       return;
     }
 
-    if (
-      !user?.firstName?.trim() ||
-      !user?.lastName?.trim() ||
-      !user?.email?.trim() ||
-      !user?.phone?.trim()
-    ) {
-      toast.info('Please update your profile first before adding quotes');
-      navigate('/account');
-      return;
-    }
-
     const formData = getValues();
-
     if (!formData.title) {
       toast.error('Please fill the form first');
       return;
@@ -794,11 +904,10 @@ const CreateProductForm = () => {
         return;
       }
     }
-
     if (formData.minimumBudget) {
-      const minBudget = formData.minimumBudget.toString().trim();
-      console.log(minBudget);
-      if (!/^\d+$/.test(minBudget) || parseInt(minBudget) < 1) {
+      const mb = formData.minimumBudget.toString().trim();
+
+      if (!/^\d+$/.test(mb) || parseInt(mb) < 1) {
         toast.error('Invalid Budget range');
         return;
       }
@@ -816,8 +925,7 @@ const CreateProductForm = () => {
         if (fileDoc) multipartData.append('document', fileDoc);
         return;
       }
-      if (field === 'subCategoryId') return;
-      if (field === 'categoryId') return;
+      if (field === 'subCategoryId' || field === 'categoryId') return;
       if (
         (field === 'oldProductValue' || field === 'productCondition') &&
         formData.productType !== 'old_product'
@@ -831,62 +939,121 @@ const CreateProductForm = () => {
     });
 
     multipartData.append('draft', isDraft);
-    multipartData.append('categoryId', categoryId);
-    multipartData.append('subCategoryId', formData.subCategoryId || subCategoryId);
+    multipartData.append('categoryId', draftState?.categoryId?._id || '');
+    multipartData.append('subCategoryId', formData.subCategoryId);
+    multipartData.append('products', JSON.stringify([{ _id: draftState?._id }]));
+    multipartData.append('productId', draftState?._id || '');
 
-    await createProduct(categoryId, subCategoryId, multipartData);
-    toast.success(`Form ${isDraft ? 'saved as draft' : 'submitted'} successfully!`);
-  };
-  useEffect(() => {
-    if (createProductRes) {
-      navigate('/');
+    if (isDraft) {
+      multipartData.append('createRequirement', 'false');
+      await saveAsDraftFn(multipartData, false);
+    } else {
+      multipartData.append('createRequirement', 'true');
+      await updateDraft(multipartData, false);
     }
-  }, [createProductRes]);
+  };
+
+  useEffect(() => {
+    if (saveAsDraftRes) {
+      toast.success('Draft saved successfully');
+      getDraft(productId);
+    }
+  }, [saveAsDraftRes]);
+  useEffect(() => {
+    if (updateDraftRes) {
+      toast.success('Submitted successfully');
+      navigate(-1);
+    }
+  }, [updateDraftRes]);
+
+  const categoryLabel = () => {
+    const map = {
+      beauty: 'Personal Care',
+      electronics: 'Mobile, Tablet and Wearables',
+      sports: 'Sports & Stationery',
+      home: 'Home Appliances',
+      industrial: 'Industrial & Construction Material',
+      furniture: 'Furniture and Decor',
+    };
+    return map[currentCategoryName] || currentCategoryName;
+  };
 
   return (
     <>
       <Authentication setOpen={setOpen} open={open} />
-      <div className="w-full max-w-7xl mx-auto p-4">
-        {/* ... breadcrumb unchanged ... */}
 
-        <CategoryForm
-          currentCategoryName={currentCategoryName}
-          catByIdData={catByIdData}
-          subCategroies={subCategroies}
-          subCategoriesData={subCategoriesData}
-          subCategoryId={subCategoryId}
-          // ✅ pass form methods down — no onFormDataChange needed
-          register={register}
-          watch={watch}
-          setValue={setValue}
-          image={image}
-          setImage={setImage}
-          fileDoc={fileDoc}
-          setFileDoc={setFileDoc}
-        />
+      <div className="w-full max-w-7xl mx-auto p-4 min-h-screen">
+        {getDraftLoading ? (
+          <CategoryFormSkeleton />
+        ) : (
+          <>
+            <div className="flex flex-row sm:justify-between justify-end items-center gap-3 mb-6">
+              <Breadcrumb className="sm:block hidden">
+                <BreadcrumbList>
+                  <BreadcrumbItem
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => navigate(-1)}
+                  >
+                    <MoveLeft className="h-4 w-4" />
+                    <BreadcrumbPage className="capitalize font-semibold text-gray-500">
+                      Selected Product
+                    </BreadcrumbPage>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbPage className="capitalize font-semibold text-orange-600">
+                      {categoryLabel()}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
 
-        <div className="flex justify-end gap-3 my-5">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-32 cursor-pointer border-[#2C3E50]"
-            onClick={() => handleSubmit(true)}
-            disabled={addProductLoading}
-          >
-            Save as Draft
-          </Button>
-          <Button
-            type="button"
-            disabled={addProductLoading}
-            className="text-white w-32 cursor-pointer bg-orange-600 border-primary-btn border-2"
-            onClick={() => handleSubmit(false)}
-          >
-            Submit
-          </Button>
-        </div>
+            <CategoryForm
+              currentCategoryName={currentCategoryName}
+              catByIdData={catByIdData}
+              subCategroies={subCategroies}
+              subCategoriesData={subCategoriesData}
+              subCategoryId={draftState?.subCategoryId}
+              register={register}
+              watch={watch}
+              setValue={setValue}
+              image={image}
+              setImage={setImage}
+              fileDoc={fileDoc}
+              setFileDoc={setFileDoc}
+              initialData={draftState}
+            />
+
+            <div className="flex justify-end gap-3 my-5">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-32 cursor-pointer border-[#2C3E50]"
+                onClick={() => handleSubmit(true)}
+                disabled={saveAsDraftLoading}
+              >
+                {/* {saveAsDraftLoading ? (
+                  <Spinner className="w-5 h-5 animate-spin" />
+                ) : (
+                  'Save as Draft'
+                )} */}
+                Save as Draft
+              </Button>
+              <Button
+                type="button"
+                className="text-white w-32 cursor-pointer bg-orange-600 border-primary-btn border-2"
+                onClick={() => handleSubmit(false)}
+                disabled={updateLoading}
+              >
+                {/* {updateLoading ? <Spinner className="w-5 h-5 animate-spin" /> : 'Submit'}
+                 */}
+                Submit
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
 };
 
-export default CreateProductForm;
+export default UpdateCreateProductForm;

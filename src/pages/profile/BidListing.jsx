@@ -51,13 +51,13 @@ const BidListing = () => {
           <div className=" ">
             <Avatar className="w-10 h-10">
               <AvatarImage
-                src={row.original.avatar}
+                src={row.original.product?.image}
                 alt="product image"
                 className="rounded-full w-full h-full object-cover"
               />
               <AvatarFallback className="bg-gray-200 rounded-full flex w-full h-full  items-center justify-center text-sm font-semibold">
-                {fallBackName(row.original?.product)}
-                {/* <img src='/no-image.webp'></img> */}
+                {/* {fallBackName(row.original?.product)} */}
+                <img src="/no-image.webp"></img>
               </AvatarFallback>
             </Avatar>
           </div>
