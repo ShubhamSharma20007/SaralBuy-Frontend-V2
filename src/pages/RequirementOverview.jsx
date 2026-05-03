@@ -1,139 +1,153 @@
-import TableListing from '@/components/custom/TableListing'
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb'
-import { Button } from '@/components/ui/button'
-import { dateFormatter } from '@/utils/dateFormatter'
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
-import { Banknote, CalendarDays, MoveLeft } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import requirementService from '@/services/requirement.service'
-import { Skeleton } from '@/components/ui/skeleton'
-import { CategoryFormSkeleton } from '@/const/CustomSkeletons'
+import TableListing from '@/components/custom/TableListing';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
+import { Button } from '@/components/ui/button';
+import { dateFormatter } from '@/utils/dateFormatter';
+import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
+import { Banknote, CalendarDays, MoveLeft } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import requirementService from '@/services/requirement.service';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CategoryFormSkeleton } from '@/const/CustomSkeletons';
 const RequirementOverview = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { requirementId } = useParams()
-  const productData = location.state?.products || []
-  const [currentProduct, setCurrentProduct] = useState(null)
-  const [bidData, setBidData] = useState([])
-  const [iterateData, setIterateData] = useState([])
-  const [requirementData, setRequirementData] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { requirementId } = useParams();
+  const productData = location.state?.products || [];
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const [bidData, setBidData] = useState([]);
+  const [iterateData, setIterateData] = useState([]);
+  const [requirementData, setRequirementData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState('');
-  let intervalRef = useRef(null)
-
+  let intervalRef = useRef(null);
 
   useEffect(() => {
     const fetchRequirementData = async () => {
       if (requirementId) {
         try {
-          const data = await requirementService.getRequirementById(requirementId)
-          setRequirementData(data)
-          setLoading(false)
+          const data = await requirementService.getRequirementById(requirementId);
+          setRequirementData(data);
+          setLoading(false);
         } catch (error) {
-          console.error("Error fetching requirement data:", error)
-          setLoading(false)
+          console.error('Error fetching requirement data:', error);
+          setLoading(false);
         }
       }
-    }
+    };
 
-    fetchRequirementData()
-  }, [requirementId])
+    fetchRequirementData();
+  }, [requirementId]);
 
   useEffect(() => {
     if (requirementData) {
       // Use fetched data if available, otherwise fall back to location state
-      const dataToUse = requirementData || (productData && productData.length > 0 ? productData[0] : null)
+      const dataToUse =
+        requirementData || (productData && productData.length > 0 ? productData[0] : null);
 
       if (dataToUse) {
-        setCurrentProduct(dataToUse)
+        setCurrentProduct(dataToUse);
 
         // Create array with main product and subProducts
         if (dataToUse.product) {
-          const allProducts = [
-            dataToUse.product,
-            ...(dataToUse.product.subProducts || [])
-          ]
-          setIterateData(allProducts)
+          const allProducts = [dataToUse.product, ...(dataToUse.product.subProducts || [])];
+          setIterateData(allProducts);
         }
 
         // Transform sellers data into bid table format
         if (dataToUse.sellers && dataToUse.sellers.length > 0) {
-          const transformedBids = dataToUse.sellers.map((seller) => ({
+          const transformedBids = dataToUse.sellers.map(seller => ({
             avtar: seller.seller?.profileImage,
-            date: seller.date ? dateFormatter(seller.date) : (seller.createdAt ? dateFormatter(seller.createdAt) : (dataToUse.createdAt ? dateFormatter(dataToUse.createdAt) : 'N/A')),
-            bid_buy: `${seller.seller?.firstName || ''} ${seller.seller?.lastName || ''}`.trim() || "Anonymous Seller",
-            bid_amount: seller.budgetAmount ? `₹${seller.budgetAmount}` : "N/A",
-            chat_message: seller.message || "Interested in your requirement",
-            action: "chat",
+            date: seller.date
+              ? dateFormatter(seller.date)
+              : seller.createdAt
+                ? dateFormatter(seller.createdAt)
+                : dataToUse.createdAt
+                  ? dateFormatter(dataToUse.createdAt)
+                  : 'N/A',
+            bid_buy:
+              `${seller.seller?.firstName || ''} ${seller.seller?.lastName || ''}`.trim() ||
+              'Anonymous Seller',
+            bid_amount: seller.budgetAmount ? `₹${seller.budgetAmount}` : 'N/A',
+            chat_message: seller.message || 'Interested in your requirement',
+            action: 'chat',
             sellerId: seller.seller?._id || seller._id || seller.userId,
             location: seller.seller?.currentLocation || seller.seller?.address,
-            status: seller.seller?.status
-          }))
-          setBidData(transformedBids)
+            status: seller.seller?.status,
+          }));
+          setBidData(transformedBids);
         }
       }
     }
-  }, [requirementData, productData])
+  }, [requirementData, productData]);
   const handleChatNavigate = (sellerId, sellerName, sellerAvatar) => {
     if (currentProduct) {
-      navigate('/chat?productId='+currentProduct.product?._id, {
+      navigate('/chat?productId=' + currentProduct.product?._id, {
         state: {
           productId: currentProduct.product?._id,
           buyerId: currentProduct.buyer?._id,
           sellerId: sellerId,
           partnerName: sellerName,
-          partnerAvatar: sellerAvatar
+          partnerAvatar: sellerAvatar,
         },
-      })
+      });
     }
-  }
+  };
 
-  const columns= [
+  const columns = [
     {
-      accessorKey: "avtar",
-      header: "",
+      accessorKey: 'avtar',
+      header: '',
       size: 60,
       cell: ({ row }) => {
-        const image = row.original.avtar
-        const name = row.original.bid_buy || "NA"
+        const image = row.original.avtar;
+        const name = row.original.bid_buy || 'NA';
         const initials = name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase();
 
         return (
           <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={image} alt={name} className='rounded-full w-full h-full object-cover' />
+              <AvatarImage
+                src={image}
+                alt={name}
+                className="rounded-full w-full h-full object-cover"
+              />
               <AvatarFallback className="bg-gray-200 rounded-full flex w-full h-full  items-center justify-center text-sm font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
           </div>
-        )
-      }
+        );
+      },
     },
     {
-      accessorKey: "date",
-      header: "Date",
+      accessorKey: 'date',
+      header: 'Date',
     },
     {
-      accessorKey: "bid_buy",
-      header: "Seller",
+      accessorKey: 'bid_buy',
+      header: 'Seller',
     },
     {
-      accessorKey: "bid_amount",
-      header: "Quoted Price",
+      accessorKey: 'bid_amount',
+      header: 'Quoted Price',
     },
     // {
     //   accessorKey: "chat_message",
     //   header: "Chat Message",
     // },
     {
-      accessorKey: "location",
-      header: "Location",
+      accessorKey: 'location',
+      header: 'Location',
     },
     // {
     //   accessorKey: "status",
@@ -143,23 +157,24 @@ const RequirementOverview = () => {
     //   }
     // },
     {
-      accessorKey: "action",
-      header: "Action",
+      accessorKey: 'action',
+      header: 'Action',
       cell: ({ row }) => (
         <Button
           className="text-sm cursor-pointer text-orange-600 underline"
           variant="link"
-          onClick={() => handleChatNavigate(row.original.sellerId, row.original.bid_buy, row.original.avtar)}
+          onClick={() =>
+            handleChatNavigate(row.original.sellerId, row.original.bid_buy, row.original.avtar)
+          }
         >
           Chat Now
         </Button>
-      )
+      ),
     },
-  ]
+  ];
 
   useEffect(() => {
     if (!requirementData?.createdAt || !requirementData?.product?.bidActiveDuration) return;
-
 
     const createdAt = new Date(requirementData.createdAt).getTime();
     const durationDays = Number(requirementData.product.bidActiveDuration);
@@ -193,9 +208,7 @@ const RequirementOverview = () => {
   }, [requirementData]);
 
   if (loading) {
-    return (
-      <CategoryFormSkeleton />
-    )
+    return <CategoryFormSkeleton />;
   }
 
   if (!currentProduct) {
@@ -203,15 +216,17 @@ const RequirementOverview = () => {
       <div className="w-full max-w-7xl mx-auto space-y-6 p-4">
         <div className="text-center">No product data available</div>
       </div>
-    )
+    );
   }
-
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-3 p-4">
       <Breadcrumb className="sm:block hidden">
         <BreadcrumbList>
-          <BreadcrumbItem className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(-1)}>
+          <BreadcrumbItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => navigate(-1)}
+          >
             <MoveLeft className="h-4 w-4" />
             <BreadcrumbPage className="capitalize font-semibold text-gray-500 text-[15px]">
               Requirement Detail's
@@ -226,10 +241,9 @@ const RequirementOverview = () => {
           {/* Image */}
           <div className="lg:col-span-4 bg-gray-100 flex justify-center items-center rounded-lg p-4 h-48">
             <img
-              src={item.image || "/no-image.webp"}
-              alt={item.title || "Product"}
+              src={item.image || '/no-image.webp'}
+              alt={item.title || 'Product'}
               className="object-contain h-full w-full rounded-lg mix-blend-darken"
-
             />
           </div>
 
@@ -254,12 +268,9 @@ const RequirementOverview = () => {
               >
                 Expired
               </Button>
-
             )}
 
-            <h2 className="text-xl font-bold capitalize">
-              {item.title || 'N/A'}
-            </h2>
+            <h2 className="text-xl font-bold capitalize">{item.title || 'N/A'}</h2>
 
             <p className="text-sm text-gray-600">
               {item.description || 'No description available'}
@@ -267,18 +278,18 @@ const RequirementOverview = () => {
 
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-2 pr-3 border-r-2 py-1">
-                <div className='flex gap-1 items-center'>
+                <div className="flex gap-1 items-center">
                   <Banknote className="w-5 h-5" />
                   <span className="capitalize">Quantity:</span>
                 </div>
-                <span className='font-semibold'>{item.quantity || 'N/A'}</span>
+                <span className="font-semibold">{item.quantity || 'N/A'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className='flex gap-1 items-center'>
+                <div className="flex gap-1 items-center">
                   <CalendarDays className="w-4 h-4" />
                   <span className="capitalize">Delivery By:</span>
                 </div>
-                <span className='font-semibold'>
+                <span className="font-semibold">
                   {item.paymentAndDelivery?.ex_deliveryDate
                     ? dateFormatter(item.paymentAndDelivery.ex_deliveryDate)
                     : 'N/A'}
@@ -296,7 +307,9 @@ const RequirementOverview = () => {
             {item.conditionOfProduct && (
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium">Condition:</span>
-                <span className="text-gray-600 capitalize">{item.conditionOfProduct.replace('_', ' ')}</span>
+                <span className="text-gray-600 capitalize">
+                  {item.conditionOfProduct.replace('_', ' ')}
+                </span>
               </div>
             )}
           </div>
@@ -305,7 +318,7 @@ const RequirementOverview = () => {
 
       {/* Table Listing */}
 
-      <div className='bg-orange-50 p-4 rounded-md'>
+      <div className="bg-orange-50 p-4 rounded-md">
         <TableListing
           data={bidData}
           columns={columns}
@@ -317,7 +330,7 @@ const RequirementOverview = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default RequirementOverview
+export default RequirementOverview;

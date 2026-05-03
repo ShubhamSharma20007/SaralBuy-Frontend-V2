@@ -695,11 +695,10 @@ const Chatbot = () => {
     socket.emit(SOCKET_EVENTS.CHAT_USER, sellerId);
     socket.on(SOCKET_EVENTS.CHAT_USER, user => {
       // seller chat tab user
-      setRecentChats((prev)=>[user,...prev])
-      
+      setRecentChats(prev => [user, ...prev]);
     });
   }, [state]);
-  console.log(recentChats)
+  console.log(recentChats);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 mb-5">

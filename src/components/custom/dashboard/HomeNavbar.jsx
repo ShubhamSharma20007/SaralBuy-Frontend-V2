@@ -449,22 +449,22 @@ const HomeNavbar = () => {
   }, [showDropdown, productsRef]);
 
   useEffect(() => {
-  if (!user?._id) return;
-  socket.on(SOCKET_EVENTS.CONNECT, () => {
-    console.log("Connected:", socket.id);
-  });
-   if (!socket.connected) {
-    socket.connect();
-  } else {
-    console.log("Already connected:", socket.id);
-  }
+    if (!user?._id) return;
+    socket.on(SOCKET_EVENTS.CONNECT, () => {
+      console.log('Connected:', socket.id);
+    });
+    if (!socket.connected) {
+      socket.connect();
+    } else {
+      console.log('Already connected:', socket.id);
+    }
 
-  return () => {
-    socket.off(SOCKET_EVENTS.CONNECT);
-    socket.off(SOCKET_EVENTS.DISCONNECT);
-    socket.disconnect()
-  };
-}, [user?._id]);
+    return () => {
+      socket.off(SOCKET_EVENTS.CONNECT);
+      socket.off(SOCKET_EVENTS.DISCONNECT);
+      socket.disconnect();
+    };
+  }, [user?._id]);
   return (
     <section className="bg-gray-100">
       <div className="mb-2 relative z-9 max-w-7xl mx-auto">

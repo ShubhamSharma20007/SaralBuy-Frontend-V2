@@ -1,4 +1,3 @@
-
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-router';
 import HomeNavbar from './components/custom/dashboard/HomeNavbar';
@@ -17,8 +16,8 @@ import Requirements from './pages/profile/Requirements';
 import CloseDeal from './pages/profile/CloseDeal';
 import UpdateCreateProductForm from './pages/UpdateCreateProductForm';
 import RequirementOverview from './pages/RequirementOverview';
-const Dashboard = lazy(()=>import("./pages/Dashboard"))
-const Chatbot = lazy(() => import("./pages/Chatbot"));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Chatbot = lazy(() => import('./pages/Chatbot'));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -64,12 +63,8 @@ export default function AppRoutes() {
             <Route path="bid" element={<BidListing />} />
             <Route path="requirements" element={<Requirements />} />
             <Route path="deal" element={<CloseDeal />} />
-            
-            <Route
-              path="requirements-overview/:requirementId"
-              element={<RequirementOverview />}
-            />
-           
+
+            <Route path="requirements-overview/:requirementId" element={<RequirementOverview />} />
           </Route>
           <Route path="/chat" element={<Chatbot />} />
           <Route path="/bid-overview/:bidId" element={<BidOverview />} />
