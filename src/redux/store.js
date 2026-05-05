@@ -6,6 +6,6 @@ export const store = configureStore({
   reducer: {
     category: categoryReducer,
     user: userReducer,
-    chat:chatReducer
+    chat: chatReducer,
   },
 });

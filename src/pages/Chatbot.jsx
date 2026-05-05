@@ -397,63 +397,62 @@ const ChatArea = ({
 
                 {/* Right: close-deal button (visible to buyer, or when deal is closed/rejected) */}
                 {/* ── Close Deal / Deal Status Button ── */}
-{userType === 'buyer' ? (
-  <Button
-    size="sm"
-    className={`${
-      isDealClosed
-        ? 'bg-green-600 hover:bg-green-600 text-white border-green-600 cursor-default'
-        : waitingSellerApproval
-          ? 'bg-orange-600 hover:bg-orange-700 text-white border-orange-600 cursor-default'
-          : isDealRejected
-            ? 'bg-red-500 hover:bg-red-500 text-white border-red-500 cursor-not-allowed'
-            : 'text-orange-600 hover:text-orange-600 bg-transparent cursor-pointer hover:bg-transparent border-orange-600'
-    } w-24 sm:w-auto px-4 text-sm font-medium`}
-    onClick={() => {
-      if (!isDealClosed && !isDealRejected && !waitingSellerApproval) {
-        handleCloseDealClick();
-      }
-    }}
-    disabled={
-      isClosingDeal ||
-      isDealClosed ||
-      isDealRejected ||
-      waitingSellerApproval ||
-      messages.length === 0
-    }
-  >
-    {isClosingDeal
-      ? 'Closing...'
-      : isDealClosed
-        ? 'Deal Closed'
-        : waitingSellerApproval
-          ? 'Deal in Progress'
-          : isDealRejected
-            ? 'Deal Rejected'
-            : 'Close Deal'}
-  </Button>
-) : (
-  (isDealClosed || isDealRejected) && (
-    <Button
-    disabled={
-      isClosingDeal ||
-      isDealClosed ||
-      isDealRejected ||
-      waitingSellerApproval ||
-      messages.length === 0   
-    }
-      size="sm"
-      className={`px-4 text-sm font-medium cursor-default ${
-        isDealClosed
-          ? 'bg-green-600 hover:bg-green-600 text-white border-green-600'
-          : 'bg-red-500 hover:bg-red-500 text-white border-red-500'
-      }`}
-    >
-      {isDealClosed ? 'Deal Closed' : 'Deal Rejected'}
-    </Button>
-    
-  )
-)}
+                {userType === 'buyer' ? (
+                  <Button
+                    size="sm"
+                    className={`${
+                      isDealClosed
+                        ? 'bg-green-600 hover:bg-green-600 text-white border-green-600 cursor-default'
+                        : waitingSellerApproval
+                          ? 'bg-orange-600 hover:bg-orange-700 text-white border-orange-600 cursor-default'
+                          : isDealRejected
+                            ? 'bg-red-500 hover:bg-red-500 text-white border-red-500 cursor-not-allowed'
+                            : 'text-orange-600 hover:text-orange-600 bg-transparent cursor-pointer hover:bg-transparent border-orange-600'
+                    } w-24 sm:w-auto px-4 text-sm font-medium`}
+                    onClick={() => {
+                      if (!isDealClosed && !isDealRejected && !waitingSellerApproval) {
+                        handleCloseDealClick();
+                      }
+                    }}
+                    disabled={
+                      isClosingDeal ||
+                      isDealClosed ||
+                      isDealRejected ||
+                      waitingSellerApproval ||
+                      messages.length === 0
+                    }
+                  >
+                    {isClosingDeal
+                      ? 'Closing...'
+                      : isDealClosed
+                        ? 'Deal Closed'
+                        : waitingSellerApproval
+                          ? 'Deal in Progress'
+                          : isDealRejected
+                            ? 'Deal Rejected'
+                            : 'Close Deal'}
+                  </Button>
+                ) : (
+                  (isDealClosed || isDealRejected) && (
+                    <Button
+                      disabled={
+                        isClosingDeal ||
+                        isDealClosed ||
+                        isDealRejected ||
+                        waitingSellerApproval ||
+                        messages.length === 0
+                      }
+                      size="sm"
+                      className={`px-4 text-sm font-medium cursor-default ${
+                        isDealClosed
+                          ? 'bg-green-600 hover:bg-green-600 text-white border-green-600'
+                          : 'bg-red-500 hover:bg-red-500 text-white border-red-500'
+                      }`}
+                    >
+                      {isDealClosed ? 'Deal Closed' : 'Deal Rejected'}
+                    </Button>
+                  )
+                )}
 
                 {/* ✅ Seller sees "Deal Closed" / "Deal Rejected" as a read-only badge after refresh */}
                 {/* {userType === 'seller' && (isDealClosed || isDealRejected) && (
@@ -691,7 +690,7 @@ const Chatbot = () => {
     updateSetActiveRoom,
     updateMarkRoomRead,
     updateUserStatus,
-    updateSetRecentChats
+    updateSetRecentChats,
   } = useDispatchChat();
   const { recentChats, messages, onlineUsers } = useChatState();
   console.log(recentChats);
@@ -934,27 +933,26 @@ const Chatbot = () => {
     return () => socket.off(SOCKET_EVENTS.RECEIVE_MESSAGE, handleReceive);
   }, [socket]);
 
-
   // Add this effect in Chatbot to listen for USER_CHATS and populate sidebar
-useEffect(() => {
-  if (!socket) return;
+  useEffect(() => {
+    if (!socket) return;
 
-  socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
+    socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
 
-  const handleUserChats = chats => {
-    updateSetRecentChats(chats);
+    const handleUserChats = chats => {
+      updateSetRecentChats(chats);
 
-    // ✅ Also refresh selectedContact with fresh productName from server
-    setSelectedContact(prev => {
-      if (!prev) return prev;
-      const fresh = chats.find(c => c.roomId === prev.roomId);
-      return fresh ? { ...prev, ...fresh } : prev;
-    });
-  };
+      // ✅ Also refresh selectedContact with fresh productName from server
+      setSelectedContact(prev => {
+        if (!prev) return prev;
+        const fresh = chats.find(c => c.roomId === prev.roomId);
+        return fresh ? { ...prev, ...fresh } : prev;
+      });
+    };
 
-  socket.on(SOCKET_EVENTS.USER_CHATS, handleUserChats);
-  return () => socket.off(SOCKET_EVENTS.USER_CHATS, handleUserChats);
-}, [socket]);
+    socket.on(SOCKET_EVENTS.USER_CHATS, handleUserChats);
+    return () => socket.off(SOCKET_EVENTS.USER_CHATS, handleUserChats);
+  }, [socket]);
 
   // ── Select contact ────────────────────────────────────────────────────────
   const handleSelectContact = contact => {

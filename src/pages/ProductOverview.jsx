@@ -191,7 +191,7 @@ const ProductOverview = () => {
   }
 
   async function onSubmit(data) {
-    if(soldProduct) return;
+    if (soldProduct) return;
     const user = userProfile;
     if (!user?.firstName?.trim() || !user?.lastName?.trim() || !user?.address?.trim()) {
       navigate('/account');
@@ -608,7 +608,9 @@ const ProductOverview = () => {
           <Button
             type="submit"
             disabled={
-              productResponse?.mainProduct?.userId?._id === userProfile?._id || createBidLoading || soldProduct
+              productResponse?.mainProduct?.userId?._id === userProfile?._id ||
+              createBidLoading ||
+              soldProduct
             }
             variant={'ghost'}
             className="w-32 float-end border text-xs bg-orange-700  transition-all ease-in-out duration-300 hover:bg-orange-600 text-white hover:text-white cursor-pointer"
@@ -763,12 +765,12 @@ const ProductOverview = () => {
                   />
                 </div>
                 {soldProduct && (
-                      <img
-                        src="sold.png"
-                        alt="Sold"
-                        className="absolute top-[-34px] right-[-20px] w-28"
-                      />
-                    )}
+                  <img
+                    src="sold.png"
+                    alt="Sold"
+                    className="absolute top-[-34px] right-[-20px] w-28"
+                  />
+                )}
               </div>
 
               {/* Product Info */}
@@ -893,7 +895,8 @@ const ProductOverview = () => {
                         onClick={() => handleAddToCart(productResponse?.mainProduct?._id)}
                         disabled={
                           addToCartLoading ||
-                          productResponse?.mainProduct?.userId?._id === userProfile?._id || soldProduct
+                          productResponse?.mainProduct?.userId?._id === userProfile?._id ||
+                          soldProduct
                         }
                       >
                         {addToCartLoading ? (

@@ -258,8 +258,8 @@ const renderMobileMenuItem = item => {
 
 const HomeNavbar = () => {
   const { user } = useUserState();
-  const {recentChats,} = useChatState();
-  const {updateSetRecentChats,updateLastMessage,updateUserStatus} = useDispatchChat()
+  const { recentChats } = useChatState();
+  const { updateSetRecentChats, updateLastMessage, updateUserStatus } = useDispatchChat();
   const notifications = MOCK_NOTIFICATIONS;
   const unseenCount = notifications.filter(n => !n.seen).length;
   const { fn, data } = useFetch(productService.getSeachProduct);
@@ -297,21 +297,21 @@ const HomeNavbar = () => {
   const handleCartClick = () => {
     /* navigate("/account/cart") */
   };
-const handleMessageClick = chat => {
-  setShowMessageDropdown(false);
-  const isBuyer = chat.buyerId === user?._id;
-  navigate('/chat', {
-    state: {
-      buyerId:      chat.buyerId,
-      sellerId:     chat.sellerId,
-      productName:  chat.productName,
-      partnerName:  chat.name,
-      partnerAvatar:chat.avatar,
-      roomId:       chat.roomId,  
-      isBuyer,
-    },
-  });
-};
+  const handleMessageClick = chat => {
+    setShowMessageDropdown(false);
+    const isBuyer = chat.buyerId === user?._id;
+    navigate('/chat', {
+      state: {
+        buyerId: chat.buyerId,
+        sellerId: chat.sellerId,
+        productName: chat.productName,
+        partnerName: chat.name,
+        partnerAvatar: chat.avatar,
+        roomId: chat.roomId,
+        isBuyer,
+      },
+    });
+  };
   const handleNotificationClick = _notif => {
     setShowNotificationDropdown(false); /* navigate */
   };
@@ -462,54 +462,53 @@ const handleMessageClick = chat => {
     };
   }, [showDropdown, productsRef]);
 
-useEffect(() => {
-  if (!user?._id) return;
+  useEffect(() => {
+    if (!user?._id) return;
 
-  const fetchChats = () => {
-    socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
-  };
+    const fetchChats = () => {
+      socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
+    };
 
-  socket.on(SOCKET_EVENTS.USER_CHATS, chats => {
-    updateSetRecentChats(chats);
-  });
+    socket.on(SOCKET_EVENTS.USER_CHATS, chats => {
+      updateSetRecentChats(chats);
+    });
 
-  // ✅ On unread update — refresh the full chat list so new convos appear
-  socket.on(SOCKET_EVENTS.UNREAD_UPDATE, ({ roomId, field, lastMessage }) => {
-    // First try to update existing entry
-    updateLastMessage({ roomId, unreadField: field, lastMessage });
-    // Then re-fetch to catch brand new conversations not yet in list
-    fetchChats();
-  });
-
-  if (!socket.connected) {
-    socket.connect();
-    // Tell server this user is online AFTER connection confirmed
-      socket.emit(SOCKET_EVENTS.ONLINE_USER);
-    socket.on(SOCKET_EVENTS.CONNECT, () => {
-      console.log('Connected:', socket.id);
+    // ✅ On unread update — refresh the full chat list so new convos appear
+    socket.on(SOCKET_EVENTS.UNREAD_UPDATE, ({ roomId, field, lastMessage }) => {
+      // First try to update existing entry
+      updateLastMessage({ roomId, unreadField: field, lastMessage });
+      // Then re-fetch to catch brand new conversations not yet in list
       fetchChats();
     });
-  } else {
-    console.log('Already connected:', socket.id);
-    fetchChats();
-    socket.emit(SOCKET_EVENTS.ONLINE_USER);
-  }
 
-  // for Online/Offline
-  socket.on(SOCKET_EVENTS.USER_STATUS, ({ userId, isOnline }) => {
-    updateUserStatus({ userId, isOnline });
-  });
+    if (!socket.connected) {
+      socket.connect();
+      // Tell server this user is online AFTER connection confirmed
+      socket.emit(SOCKET_EVENTS.ONLINE_USER);
+      socket.on(SOCKET_EVENTS.CONNECT, () => {
+        console.log('Connected:', socket.id);
+        fetchChats();
+      });
+    } else {
+      console.log('Already connected:', socket.id);
+      fetchChats();
+      socket.emit(SOCKET_EVENTS.ONLINE_USER);
+    }
 
-  return () => {
-    socket.off(SOCKET_EVENTS.CONNECT);
-    socket.off(SOCKET_EVENTS.DISCONNECT);
-    socket.off(SOCKET_EVENTS.USER_CHATS);
-    socket.off(SOCKET_EVENTS.UNREAD_UPDATE);
-    socket.off(SOCKET_EVENTS.USER_STATUS);
-    socket.disconnect();
-  };
-}, [user?._id]);
+    // for Online/Offline
+    socket.on(SOCKET_EVENTS.USER_STATUS, ({ userId, isOnline }) => {
+      updateUserStatus({ userId, isOnline });
+    });
 
+    return () => {
+      socket.off(SOCKET_EVENTS.CONNECT);
+      socket.off(SOCKET_EVENTS.DISCONNECT);
+      socket.off(SOCKET_EVENTS.USER_CHATS);
+      socket.off(SOCKET_EVENTS.UNREAD_UPDATE);
+      socket.off(SOCKET_EVENTS.USER_STATUS);
+      socket.disconnect();
+    };
+  }, [user?._id]);
 
   return (
     <section className="bg-gray-100">

@@ -197,7 +197,7 @@ const CloseDeal = () => {
   const [completeRequirements, setCompleteRequirements] = useState([]);
   const [approvedRequirements, setApprovedRequirements] = useState([]);
   useEffect(() => {
-    console.log(tab)
+    console.log(tab);
     if (tab === 'approved_bids') {
       pendingApprovedFn();
     } else {
@@ -239,7 +239,7 @@ const CloseDeal = () => {
           product: item?.product?.title,
           min_budget: item?.minBudget,
           final_price: item?.amount,
-          seller:mergeName(item.seller),
+          seller: mergeName(item.seller),
           dealStatus:
             item?.closedDealStatus === 'waiting_seller_approval' ||
             item?.closedDealStatus === 'pending'
