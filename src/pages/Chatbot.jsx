@@ -10,13 +10,32 @@ import { fallBackName } from '@/utils/fallBackName';
 import useSocket from '@/hooks/useSocket';
 import { SOCKET_EVENTS } from '@/socket/socketEvents';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
-// import BudgetInputDialog from '@/Components/BudgetPopup';
+import { useUserState } from '@/redux/hooks/useUser';
+import { useChatState, useDispatchChat } from '@/redux/hooks/useChat';
+import ApprovalPopup from '@/components/custom/popups/ApprovalPopup';
+import BudgetInputDialog from '@/components/custom/popups/BudgetInputDialog';
 
 // ─────────────────────────────────────────────
 // ContactsList — sidebar list of recent chats
 // ─────────────────────────────────────────────
-const ContactsList = ({ onSelectContact, contacts = [], selectedContactId, currentUserId }) => {
+const ContactsList = ({
+  onSelectContact,
+  contacts = [],
+  selectedContactId,
+  currentUserId,
+  focusTile,
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const contactRefs = useRef({});
+
+  useEffect(() => {
+    if (focusTile !== -1 && contactRefs.current[focusTile]) {
+      contactRefs.current[focusTile].scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [focusTile]);
 
   const filteredContacts = contacts
     .filter(c => c && c.name && c.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -81,10 +100,11 @@ const ContactsList = ({ onSelectContact, contacts = [], selectedContactId, curre
                       <AvatarFallback>{fallBackName(contact.name)}</AvatarFallback>
                     </Avatar>
                     <div
-                      className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full ${
-                        isOnline ? 'bg-green-500' : 'bg-red-500'
-                      }`}
+                      className={`absolute -bottom-1 -right-1 w-4 h-4 border-2 border-white rounded-full`}
                     />
+                    {/* ${
+                        isOnline ? 'bg-green-500' : 'bg-red-500'
+                      } */}
                   </div>
 
                   {/* Name, last message, timestamp, rating, unread */}
@@ -170,7 +190,7 @@ const ChatArea = ({
 }) => {
   const chatContainerRef = useRef(null);
   const fileInputRef = useRef(null);
-
+  console.log(selectedContact, 23);
   const [messageText, setMessageText] = useState('');
 
   // Attachment local UI state
@@ -181,6 +201,12 @@ const ChatArea = ({
 
   // Budget dialog
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   // ── File handling ──────────────────────────
   const handleFileSelect = e => {
@@ -246,6 +272,7 @@ const ChatArea = ({
   const handleSendMessage = () => {
     if (!messageText.trim() && !uploadedAttachment) return;
     onSendMessage?.(messageText, uploadedAttachment || null);
+
     setMessageText('');
     clearAttachment();
   };
@@ -328,12 +355,12 @@ const ChatArea = ({
   return (
     <>
       {/* Budget dialog */}
-      {/* <BudgetInputDialog
+      <BudgetInputDialog
         open={showBudgetDialog}
         setOpen={setShowBudgetDialog}
         onConfirm={handleBudgetConfirm}
         loading={isClosingDeal}
-      /> */}
+      />
 
       <div className="flex-1 flex flex-col border-1 rounded-md w-full min-h-0">
         {/* ── Chat Header ── */}
@@ -358,34 +385,88 @@ const ChatArea = ({
                   <div className="flex flex-col">
                     <h3 className="font-semibold text-gray-700">{selectedContact.name}</h3>
                     <div className="flex items-center gap-1">
-                      <div
-                        className={`h-2 w-2 rounded-full ${isOnline ? 'bg-green-600' : 'bg-red-600'}`}
-                      />
-                      <span
-                        className={`text-sm font-medium ${isOnline ? 'text-green-600' : 'text-red-600'}`}
-                      >
-                        {isOnline ? 'Online' : 'Offline'}
+                      <div className={`h-2 w-2 rounded-full `} />
+                      {/* ${isOnline ? 'bg-green-600' : 'bg-red-600'} */}
+                      <span className={`text-sm font-medium `}>
+                        {/* ${isOnline ? 'text-green-600' : 'text-red-600'} */}
+                        {/* {isOnline ? 'Online' : 'Offline'} */}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right: close-deal button (visible to buyer, or when deal is closed/rejected) */}
-                {(userType === 'buyer' || isDealClosed || isDealRejected) && (
-                  <Button
-                    variant={closeDealVariant}
-                    size="sm"
-                    className={`${closeDealClass} w-24 sm:w-auto px-4 text-sm font-medium`}
-                    onClick={
-                      waitingSellerApproval && isSeller
-                        ? () => setShowApprovalPopup(true)
-                        : handleCloseDealClick
-                    }
-                    disabled={isCloseDealDisabled}
+                {/* ── Close Deal / Deal Status Button ── */}
+{userType === 'buyer' ? (
+  <Button
+    size="sm"
+    className={`${
+      isDealClosed
+        ? 'bg-green-600 hover:bg-green-600 text-white border-green-600 cursor-default'
+        : waitingSellerApproval
+          ? 'bg-orange-600 hover:bg-orange-700 text-white border-orange-600 cursor-default'
+          : isDealRejected
+            ? 'bg-red-500 hover:bg-red-500 text-white border-red-500 cursor-not-allowed'
+            : 'text-orange-600 hover:text-orange-600 bg-transparent cursor-pointer hover:bg-transparent border-orange-600'
+    } w-24 sm:w-auto px-4 text-sm font-medium`}
+    onClick={() => {
+      if (!isDealClosed && !isDealRejected && !waitingSellerApproval) {
+        handleCloseDealClick();
+      }
+    }}
+    disabled={
+      isClosingDeal ||
+      isDealClosed ||
+      isDealRejected ||
+      waitingSellerApproval ||
+      messages.length === 0
+    }
+  >
+    {isClosingDeal
+      ? 'Closing...'
+      : isDealClosed
+        ? 'Deal Closed'
+        : waitingSellerApproval
+          ? 'Deal in Progress'
+          : isDealRejected
+            ? 'Deal Rejected'
+            : 'Close Deal'}
+  </Button>
+) : (
+  (isDealClosed || isDealRejected) && (
+    <Button
+    disabled={
+      isClosingDeal ||
+      isDealClosed ||
+      isDealRejected ||
+      waitingSellerApproval ||
+      messages.length === 0   
+    }
+      size="sm"
+      className={`px-4 text-sm font-medium cursor-default ${
+        isDealClosed
+          ? 'bg-green-600 hover:bg-green-600 text-white border-green-600'
+          : 'bg-red-500 hover:bg-red-500 text-white border-red-500'
+      }`}
+    >
+      {isDealClosed ? 'Deal Closed' : 'Deal Rejected'}
+    </Button>
+    
+  )
+)}
+
+                {/* ✅ Seller sees "Deal Closed" / "Deal Rejected" as a read-only badge after refresh */}
+                {/* {userType === 'seller' && (isDealClosed || isDealRejected) && (
+                  <span
+                    className={`px-4 py-1.5 rounded text-sm font-medium border ${
+                      isDealClosed
+                        ? 'bg-green-100 text-green-700 border-green-300'
+                        : 'bg-red-100 text-red-600 border-red-200'
+                    }`}
                   >
-                    {closeDealLabel}
-                  </Button>
-                )}
+                    {isDealClosed ? 'Deal Closed' : 'Deal Rejected'}
+                  </span>
+                )} */}
               </div>
             </div>
           </div>
@@ -549,7 +630,7 @@ const ChatArea = ({
             />
 
             {/* Paperclip button */}
-            <div
+            {/* <div
               className={`p-2 rounded-full border-2 border-gray-500 ${
                 isSelfChat || isUploading
                   ? 'opacity-50 cursor-not-allowed'
@@ -558,7 +639,7 @@ const ChatArea = ({
               onClick={() => !isSelfChat && !isUploading && fileInputRef.current?.click()}
             >
               <Paperclip className="w-4 h-4 text-gray-700" />
-            </div>
+            </div> */}
 
             {/* Send button */}
             <Button
@@ -583,7 +664,7 @@ const ChatArea = ({
       /> */}
 
       {/* Approval popup */}
-      {/* <ApprovalPopup
+      <ApprovalPopup
         open={showApprovalPopup}
         setOpen={setShowApprovalPopup}
         dealId={closedDealId || ''}
@@ -591,7 +672,7 @@ const ChatArea = ({
         partnerName={selectedContact?.name || 'Buyer'}
         onAction={onDealApproval}
         loading={approvalLoading}
-      /> */}
+      />
     </>
   );
 };
@@ -602,26 +683,40 @@ const ChatArea = ({
 const Chatbot = () => {
   const socket = useSocket();
   const location = useLocation();
+  const {
+    updateChatState,
+    updateMessages,
+    updateAddMessages,
+    updateLastMessage,
+    updateSetActiveRoom,
+    updateMarkRoomRead,
+    updateUserStatus,
+    updateSetRecentChats
+  } = useDispatchChat();
+  const { recentChats, messages, onlineUsers } = useChatState();
+  console.log(recentChats);
+  const { user } = useUserState();
   const [searchParams] = useSearchParams();
-  const productId = searchParams.get('productId'); // productId has a Room Id
-  const [recentChats, setRecentChats] = useState([]);
+  const [focusTile, setFocusTile] = useState(-1);
   const [selectedContact, setSelectedContact] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
-  const state = location.state || {};
 
-  // ── State se directly lo ──────────────────────────
+  const state = location.state || {};
   const buyerId = state.buyerId;
-  const partnerName = state.partnerName;
-  const partnerAvatar = state.partnerAvatar;
   const productName = state.productName;
   const sellerId = state.sellerId;
+  const incomingRoomId = state.roomId; // passed from navbar click
+  const productId = state.productId;
 
-  // ── User / role ──────────────────────────────
-  // TODO: replace with your auth store / context
-  const currentUserId = null; // e.g. user?._id
-  const userType = 'buyer'; // 'buyer' | 'seller' — derive from selectedContact + currentUserId
+  const currentUserId = user?._id;
+  const userType = selectedContact
+    ? selectedContact.buyerId === currentUserId
+      ? 'buyer'
+      : 'seller'
+    : 'buyer';
+  const isBuyerRole = state.isBuyer !== undefined ? state.isBuyer : buyerId === currentUserId;
+  const partnerIdToFetch = isBuyerRole ? sellerId : buyerId;
 
   // ── Deal state ───────────────────────────────
   const [isClosingDeal, setIsClosingDeal] = useState(false);
@@ -632,79 +727,303 @@ const Chatbot = () => {
   const [isBuyer, setIsBuyer] = useState(false);
   const [finalBudget, setFinalBudget] = useState(0);
   const [closedDealId, setClosedDealId] = useState(null);
-
-  // ── Popup state ──────────────────────────────
   const [showRatingPopup, setShowRatingPopup] = useState(false);
   const [ratingLoading, setRatingLoading] = useState(false);
   const [lastClosedChatId, setLastClosedChatId] = useState(null);
   const [showApprovalPopup, setShowApprovalPopup] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
+  const [pendingDealId, setPendingDealId] = useState(null);
+  const [pendingDealAmount, setPendingDealAmount] = useState(0);
 
-  // ── Callbacks — add your logic inside ────────
-  const handleSelectContact = contact => {
-    setSelectedContact(contact);
-    setMessages([]);
-    // TODO: reset unread count, join socket room, mark as read
-  };
+  useEffect(() => {
+    if (recentChats.length > 0 && productId && sellerId) {
+      const tileIndex = recentChats.findIndex(
+        item => item.productId === productId && item.sellerId === sellerId
+      );
+      setFocusTile(tileIndex);
 
-  const handleSidebarContactUpdate = (roomId, updater) => {
-    setRecentChats(prev => prev.map(chat => (chat.roomId === roomId ? updater(chat) : chat)));
-  };
+      if (tileIndex !== -1 && !selectedContact) {
+        handleSelectContact(recentChats[tileIndex]);
+      }
+    }
+  }, [recentChats, productId, sellerId]);
 
-  const handleSendMessage = (messageText, attachment) => {
-    // TODO: emit socket message, update messages & sidebar
-    const newMessage = {
-      id: Date.now().toString(),
-      text: messageText,
-      senderId: currentUserId,
-      senderType: userType,
-      time: new Date().toLocaleTimeString(),
-      timestamp: new Date().toISOString(),
-      attachment: attachment || null,
+  // ── DEAL_STATUS_UPDATE listener (buyer receives confirmation / both receive result)
+  // ── DEAL_STATUS_UPDATE: handles live updates AND refresh restore ──────────────
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleDealStatusUpdate = ({ roomId: updatedRoomId, dealId, status, amount }) => {
+      // ✅ Apply to whatever room we're currently in (works on refresh too)
+      // Don't gate on selectedContact?.roomId — on refresh selectedContact
+      // might not be set yet when JOIN_ROOM fires. Store it and apply.
+
+      setClosedDealId(dealId);
+      setFinalBudget(amount);
+
+      if (status === 'waiting_seller_approval') {
+        setIsClosingDeal(false);
+        setWaitingSellerApproval(true);
+        setIsBuyer(true);
+        setIsDealClosed(false);
+        setIsDealRejected(false);
+      }
+
+      if (status === 'completed') {
+        setIsDealClosed(true);
+        setWaitingSellerApproval(false);
+        setShowApprovalPopup(false);
+        setIsClosingDeal(false);
+        setIsDealRejected(false);
+        setIsBuyer(false);
+        setIsSeller(false);
+      }
+
+      if (status === 'rejected') {
+        setIsDealRejected(true);
+        setWaitingSellerApproval(false);
+        setShowApprovalPopup(false);
+        setIsClosingDeal(false);
+        setIsDealClosed(false);
+      }
     };
-    setMessages(prev => [...prev, newMessage]);
+
+    socket.on(SOCKET_EVENTS.DEAL_STATUS_UPDATE, handleDealStatusUpdate);
+    return () => socket.off(SOCKET_EVENTS.DEAL_STATUS_UPDATE, handleDealStatusUpdate);
+  }, [socket]);
+
+  // ── PENDING_DEAL listener — seller sees popup (live or on refresh via JOIN_ROOM)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePendingDeal = ({ dealId, amount, roomId: dealRoomId }) => {
+      // Only show popup if this deal belongs to the active chat room
+      // OR store it so it shows when seller opens that room
+      setPendingDealId(dealId);
+      setPendingDealAmount(amount);
+      setClosedDealId(dealId);
+      setFinalBudget(amount);
+      setWaitingSellerApproval(true);
+      setIsSeller(true);
+      setShowApprovalPopup(true);
+    };
+
+    socket.on(SOCKET_EVENTS.PENDING_DEAL, handlePendingDeal);
+    return () => socket.off(SOCKET_EVENTS.PENDING_DEAL, handlePendingDeal);
+  }, [socket]);
+
+  // ── FIXED: Single CHAT_USER effect — emits AND handles response ──────────
+  useEffect(() => {
+    if (!socket || !partnerIdToFetch) return;
+
+    // ✅ Emit so server responds with seller data
+    socket.emit(SOCKET_EVENTS.CHAT_USER, partnerIdToFetch);
+
+    const handleChatUser = userData => {
+      // Use incomingRoomId from navbar if available, otherwise build it
+      const roomId =
+        incomingRoomId ||
+        [buyerId, userData._id, searchParams.get('productId')].filter(Boolean).join('_');
+
+      const contactEntry = {
+        roomId,
+        name: `${userData.firstName} ${userData.lastName}`.trim(),
+        avatar: userData.profileImage || '',
+        // ✅ Correctly assign buyerId/sellerId regardless of who's logged in
+        buyerId: isBuyerRole ? currentUserId : userData._id,
+        sellerId: isBuyerRole ? userData._id : currentUserId,
+        productId: searchParams.get('productId'),
+        productName,
+        isOnline: false,
+        chatrating: 0,
+        lastMessage: null,
+        buyerUnreadCount: 0,
+        sellerUnreadCount: 0,
+      };
+
+      updateChatState(contactEntry);
+
+      // Auto-select and join if we came from navbar with a known roomId
+      if (incomingRoomId) {
+        setSelectedContact(contactEntry);
+        updateMessages([]);
+        socket.emit(SOCKET_EVENTS.JOIN_ROOM, {
+          roomId,
+          buyerId: contactEntry.buyerId,
+          sellerId: contactEntry.sellerId,
+          productId: searchParams.get('productId'),
+        });
+        socket.emit(SOCKET_EVENTS.MARK_READ, {
+          roomId,
+          readerType: isBuyerRole ? 'buyer' : 'seller',
+        });
+      }
+    };
+
+    socket.on(SOCKET_EVENTS.CHAT_USER, handleChatUser);
+    return () => socket.off(SOCKET_EVENTS.CHAT_USER, handleChatUser);
+  }, [sellerId]); // ✅ Only one effect, no duplicate
+
+  // For Status Online and offline
+
+  useEffect(() => {
+    if (!socket || !selectedContact) return;
+
+    const userType = selectedContact
+      ? selectedContact.buyerId === currentUserId
+        ? 'buyer'
+        : 'seller'
+      : isBuyerRole
+        ? 'buyer'
+        : 'seller';
+
+    const partnerId = selectedContact
+      ? userType === 'buyer'
+        ? selectedContact.sellerId
+        : selectedContact.buyerId
+      : null;
+
+    // Ask server if partner is currently online
+    socket.emit(SOCKET_EVENTS.USER_STATUS, { targetUserId: partnerId });
+
+    const handleStatus = ({ userId, isOnline }) => {
+      updateUserStatus({ userId, isOnline });
+    };
+
+    socket.on(SOCKET_EVENTS.USER_STATUS, handleStatus);
+    return () => socket.off(SOCKET_EVENTS.USER_STATUS, handleStatus);
+  }, [selectedContact?.roomId]);
+
+  // ── Incoming messages ─────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReceive = ({ roomId, message, messages: allMessages }) => {
+      if (allMessages) {
+        // Initial load from JOIN_ROOM
+        updateMessages(
+          allMessages.map(m => ({
+            id: m.timestamp,
+            text: m.message,
+            senderId: m.senderId?.toString(), // ✅ ensure string for === comparison
+            senderType: m.senderType,
+            timestamp: m.timestamp,
+            attachment: m.attachment,
+          }))
+        );
+        return;
+      }
+
+      // Live incoming message
+      updateAddMessages({
+        id: message.timestamp,
+        text: message.message,
+        senderId: message.senderId?.toString(), // ✅ ensure string
+        senderType: message.senderType,
+        timestamp: message.timestamp,
+        attachment: message.attachment,
+      });
+
+      updateLastMessage({
+        roomId,
+        lastMessage: { message: message.message, timestamp: message.timestamp },
+      });
+    };
+
+    socket.on(SOCKET_EVENTS.RECEIVE_MESSAGE, handleReceive);
+    return () => socket.off(SOCKET_EVENTS.RECEIVE_MESSAGE, handleReceive);
+  }, [socket]);
+
+
+  // Add this effect in Chatbot to listen for USER_CHATS and populate sidebar
+useEffect(() => {
+  if (!socket) return;
+
+  socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
+
+  const handleUserChats = chats => {
+    updateSetRecentChats(chats);
+
+    // ✅ Also refresh selectedContact with fresh productName from server
+    setSelectedContact(prev => {
+      if (!prev) return prev;
+      const fresh = chats.find(c => c.roomId === prev.roomId);
+      return fresh ? { ...prev, ...fresh } : prev;
+    });
+  };
+
+  socket.on(SOCKET_EVENTS.USER_CHATS, handleUserChats);
+  return () => socket.off(SOCKET_EVENTS.USER_CHATS, handleUserChats);
+}, [socket]);
+
+  // ── Select contact ────────────────────────────────────────────────────────
+  const handleSelectContact = contact => {
+    setIsClosingDeal(false);
+    setIsDealClosed(false);
+    setIsDealRejected(false);
+    setWaitingSellerApproval(false);
+    setIsSeller(false);
+    setIsBuyer(false);
+    setFinalBudget(0);
+    setClosedDealId(null);
+    setShowApprovalPopup(false);
+
+    setSelectedContact(contact);
+    updateMessages([]);
+    updateSetActiveRoom(contact.roomId);
+    updateMarkRoomRead({ roomId: contact.roomId, readerType: userType });
+    socket.emit(SOCKET_EVENTS.JOIN_ROOM, {
+      roomId: contact.roomId,
+      buyerId: contact.buyerId,
+      sellerId: contact.sellerId,
+      productId: contact.productId || searchParams.get('productId'),
+    });
+    socket.emit(SOCKET_EVENTS.MARK_READ, { roomId: contact.roomId, readerType: userType });
+  };
+
+  // ── Send message ──────────────────────────────────────────────────────────
+  const handleSendMessage = (messageText, attachment) => {
+    if (!selectedContact) return;
+    socket.emit(SOCKET_EVENTS.SEND_MESSAGE, {
+      roomId: selectedContact.roomId,
+      message: messageText,
+      senderType: userType,
+      attachment: attachment || null,
+    });
   };
 
   const handleCloseDeal = amount => {
-    // TODO: call requirementService.closeDeal(...)
+    if (!selectedContact) return;
     setIsClosingDeal(true);
-  };
-
-  const handleSubmitRating = (chatId, rating) => {
-    // TODO: call chatService.rateChat(...)
-    setRatingLoading(true);
-  };
-
-  const handleDealApproval = (dealId, action) => {
-    // TODO: call requirementService.respondToCloseDeal(...)
-    setApprovalLoading(true);
-  };
-
-  // ── Error state ──────────────────────────────
-  if (!currentUserId) {
-    // Remove this guard or replace with your auth check
-    // return (
-    //   <div className="h-screen flex items-center justify-center text-red-500 text-lg font-semibold">
-    //     Error: Please log in to access chat
-    //   </div>
-    // );
-  }
-
-  useEffect(() => {
-    if (!socket.connected) return alert('Socket not connected!');
-    socket.emit(SOCKET_EVENTS.CHAT_USER, sellerId);
-    socket.on(SOCKET_EVENTS.CHAT_USER, user => {
-      // seller chat tab user
-      setRecentChats(prev => [user, ...prev]);
+    // trigger the socket of seller Approval
+    socket.emit(SOCKET_EVENTS.DEAL_CLOUSER, {
+      roomId: selectedContact.roomId,
+      buyerId: selectedContact.buyerId,
+      sellerId: selectedContact.sellerId,
+      productId: selectedContact.productId,
+      amount,
     });
-  }, [state]);
-  console.log(recentChats);
+  };
+  const handleSubmitRating = (chatId, rating) => setRatingLoading(true);
+  const handleDealApproval = (dealId, action) => {
+    if (!selectedContact) return;
+    setApprovalLoading(true);
+
+    socket.emit(SOCKET_EVENTS.DEAL_APPROVAL, {
+      dealId,
+      action, // 'accept' | 'reject'
+      roomId: selectedContact.roomId,
+    });
+
+    setApprovalLoading(false);
+    setShowApprovalPopup(false);
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 mb-5">
       <div className="h-[calc(100vh-100px)] border-chat-border rounded-lg overflow-hidden mt-5">
         <div className="flex h-full gap-2">
-          {/* ── Desktop Sidebar ── */}
+          {/* Sidebar */}
           <div className="hidden md:block w-80 bg-gray-100 border-1 rounded-md">
             {isLoadingChats ? (
               <div className="flex items-center justify-center h-full">
@@ -716,11 +1035,12 @@ const Chatbot = () => {
                 contacts={recentChats}
                 selectedContactId={selectedContact?.roomId || null}
                 currentUserId={currentUserId}
+                focusTile={focusTile}
               />
             )}
           </div>
 
-          {/* ── Main area ── */}
+          {/* Main area */}
           <div className="flex-1 flex flex-col min-h-0">
             {/* Mobile header */}
             <div className="md:hidden py-2 border-chat-border bg-chat-sidebar">
@@ -747,14 +1067,12 @@ const Chatbot = () => {
               </div>
             </div>
 
-            {/* Chat area or empty state */}
             {selectedContact ? (
               <ChatArea
                 selectedContact={selectedContact}
                 userType={userType}
                 currentUserId={currentUserId}
                 messages={messages}
-                setMessages={setMessages}
                 isClosingDeal={isClosingDeal}
                 isDealClosed={isDealClosed}
                 isDealRejected={isDealRejected}
@@ -785,9 +1103,6 @@ const Chatbot = () => {
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground">
-                    <h3 className="text-lg font-medium mb-2">
-                      {isLoadingChats ? 'Loading...' : ''}
-                    </h3>
                     <p className="text-sm">Choose a contact from the sidebar to start messaging</p>
                   </div>
                 )}

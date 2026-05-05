@@ -47,6 +47,7 @@ import { useUserState } from '@/redux/hooks/useUser';
 import { getLocation } from '@/utils/locationAPI';
 import { SOCKET_EVENTS } from '@/socket/socketEvents';
 import socket from '@/socket/socket';
+import { useChatState, useDispatchChat } from '@/redux/hooks/useChat';
 const menu = [
   {
     title: 'Account',
@@ -103,59 +104,59 @@ const accountMenu = [
   },
 ];
 
-const MOCK_CHATS = [
-  {
-    _id: 'c1',
-    roomId: 'r1',
-    productId: 'p1',
-    sellerId: 's1',
-    buyerId: 'user_001',
-    name: 'Ramesh Verma',
-    buyerUnreadCount: 2,
-    sellerUnreadCount: 0,
-    productName: 'Samsung Galaxy A54',
-    userType: 'buyer',
-    lastMessage: {
-      message: 'Is the product still available?',
-      timestamp: new Date().toISOString(),
-      senderType: 'seller',
-    },
-  },
-  {
-    _id: 'c2',
-    roomId: 'r2',
-    productId: 'p2',
-    sellerId: 's2',
-    buyerId: 'user_001',
-    name: 'Priya Sharma',
-    buyerUnreadCount: 1,
-    sellerUnreadCount: 0,
-    productName: 'Wireless Headphones',
-    userType: 'buyer',
-    lastMessage: {
-      message: 'Can you give a discount?',
-      timestamp: new Date().toISOString(),
-      senderType: 'seller',
-    },
-  },
-  {
-    _id: 'c3',
-    roomId: 'r3',
-    productId: 'p3',
-    sellerId: 's3',
-    buyerId: 'user_001',
-    name: 'Ajay Singh',
-    buyerUnreadCount: 0,
-    sellerUnreadCount: 0,
-    productName: 'Laptop Stand',
-    userType: 'buyer',
-    lastMessage: {
-      message: 'Okay, I will check.',
-      timestamp: new Date().toISOString(),
-      senderType: 'buyer',
-    },
-  },
-];
+// const MOCK_CHATS = [
+//   {
+//     _id: 'c1',
+//     roomId: 'r1',
+//     productId: 'p1',
+//     sellerId: 's1',
+//     buyerId: 'user_001',
+//     name: 'Ramesh Verma',
+//     buyerUnreadCount: 2,
+//     sellerUnreadCount: 0,
+//     productName: 'Samsung Galaxy A54',
+//     userType: 'buyer',
+//     lastMessage: {
+//       message: 'Is the product still available?',
+//       timestamp: new Date().toISOString(),
+//       senderType: 'seller',
+//     },
+//   },
+//   {
+//     _id: 'c2',
+//     roomId: 'r2',
+//     productId: 'p2',
+//     sellerId: 's2',
+//     buyerId: 'user_001',
+//     name: 'Priya Sharma',
+//     buyerUnreadCount: 1,
+//     sellerUnreadCount: 0,
+//     productName: 'Wireless Headphones',
+//     userType: 'buyer',
+//     lastMessage: {
+//       message: 'Can you give a discount?',
+//       timestamp: new Date().toISOString(),
+//       senderType: 'seller',
+//     },
+//   },
+//   {
+//     _id: 'c3',
+//     roomId: 'r3',
+//     productId: 'p3',
+//     sellerId: 's3',
+//     buyerId: 'user_001',
+//     name: 'Ajay Singh',
+//     buyerUnreadCount: 0,
+//     sellerUnreadCount: 0,
+//     productName: 'Laptop Stand',
+//     userType: 'buyer',
+//     lastMessage: {
+//       message: 'Okay, I will check.',
+//       timestamp: new Date().toISOString(),
+//       senderType: 'buyer',
+//     },
+//   },
+// ];
 
 const MOCK_NOTIFICATIONS = [
   {
@@ -257,7 +258,8 @@ const renderMobileMenuItem = item => {
 
 const HomeNavbar = () => {
   const { user } = useUserState();
-  const recentChats = MOCK_CHATS;
+  const {recentChats,} = useChatState();
+  const {updateSetRecentChats,updateLastMessage,updateUserStatus} = useDispatchChat()
   const notifications = MOCK_NOTIFICATIONS;
   const unseenCount = notifications.filter(n => !n.seen).length;
   const { fn, data } = useFetch(productService.getSeachProduct);
@@ -295,9 +297,21 @@ const HomeNavbar = () => {
   const handleCartClick = () => {
     /* navigate("/account/cart") */
   };
-  const handleMessageClick = _chat => {
-    setShowMessageDropdown(false); /* navigate to chat */
-  };
+const handleMessageClick = chat => {
+  setShowMessageDropdown(false);
+  const isBuyer = chat.buyerId === user?._id;
+  navigate('/chat', {
+    state: {
+      buyerId:      chat.buyerId,
+      sellerId:     chat.sellerId,
+      productName:  chat.productName,
+      partnerName:  chat.name,
+      partnerAvatar:chat.avatar,
+      roomId:       chat.roomId,  
+      isBuyer,
+    },
+  });
+};
   const handleNotificationClick = _notif => {
     setShowNotificationDropdown(false); /* navigate */
   };
@@ -448,23 +462,55 @@ const HomeNavbar = () => {
     };
   }, [showDropdown, productsRef]);
 
-  useEffect(() => {
-    if (!user?._id) return;
+useEffect(() => {
+  if (!user?._id) return;
+
+  const fetchChats = () => {
+    socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
+  };
+
+  socket.on(SOCKET_EVENTS.USER_CHATS, chats => {
+    updateSetRecentChats(chats);
+  });
+
+  // ✅ On unread update — refresh the full chat list so new convos appear
+  socket.on(SOCKET_EVENTS.UNREAD_UPDATE, ({ roomId, field, lastMessage }) => {
+    // First try to update existing entry
+    updateLastMessage({ roomId, unreadField: field, lastMessage });
+    // Then re-fetch to catch brand new conversations not yet in list
+    fetchChats();
+  });
+
+  if (!socket.connected) {
+    socket.connect();
+    // Tell server this user is online AFTER connection confirmed
+      socket.emit(SOCKET_EVENTS.ONLINE_USER);
     socket.on(SOCKET_EVENTS.CONNECT, () => {
       console.log('Connected:', socket.id);
+      fetchChats();
     });
-    if (!socket.connected) {
-      socket.connect();
-    } else {
-      console.log('Already connected:', socket.id);
-    }
+  } else {
+    console.log('Already connected:', socket.id);
+    fetchChats();
+    socket.emit(SOCKET_EVENTS.ONLINE_USER);
+  }
 
-    return () => {
-      socket.off(SOCKET_EVENTS.CONNECT);
-      socket.off(SOCKET_EVENTS.DISCONNECT);
-      socket.disconnect();
-    };
-  }, [user?._id]);
+  // for Online/Offline
+  socket.on(SOCKET_EVENTS.USER_STATUS, ({ userId, isOnline }) => {
+    updateUserStatus({ userId, isOnline });
+  });
+
+  return () => {
+    socket.off(SOCKET_EVENTS.CONNECT);
+    socket.off(SOCKET_EVENTS.DISCONNECT);
+    socket.off(SOCKET_EVENTS.USER_CHATS);
+    socket.off(SOCKET_EVENTS.UNREAD_UPDATE);
+    socket.off(SOCKET_EVENTS.USER_STATUS);
+    socket.disconnect();
+  };
+}, [user?._id]);
+
+
   return (
     <section className="bg-gray-100">
       <div className="mb-2 relative z-9 max-w-7xl mx-auto">

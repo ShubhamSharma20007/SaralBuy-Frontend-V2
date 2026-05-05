@@ -156,7 +156,6 @@ const ProductOverview = () => {
       setProductResponse({
         ...mainProduct,
       });
-      console.log(productResponse);
     }
   }, [productResponse]);
 
@@ -192,6 +191,7 @@ const ProductOverview = () => {
   }
 
   async function onSubmit(data) {
+    if(soldProduct) return;
     const user = userProfile;
     if (!user?.firstName?.trim() || !user?.lastName?.trim() || !user?.address?.trim()) {
       navigate('/account');
@@ -608,7 +608,7 @@ const ProductOverview = () => {
           <Button
             type="submit"
             disabled={
-              productResponse?.mainProduct?.userId?._id === userProfile?._id || createBidLoading
+              productResponse?.mainProduct?.userId?._id === userProfile?._id || createBidLoading || soldProduct
             }
             variant={'ghost'}
             className="w-32 float-end border text-xs bg-orange-700  transition-all ease-in-out duration-300 hover:bg-orange-600 text-white hover:text-white cursor-pointer"
@@ -703,6 +703,9 @@ const ProductOverview = () => {
   };
 
   const isMergeQuote = productResponse?.mainProduct?.isMergeQuote;
+  const soldProduct = bidOverviewRes
+    ? bidOverviewRes?.product?.isSoldProduct
+    : productResponse?.mainProduct?.isSoldProduct;
 
   return (
     <>
@@ -747,16 +750,25 @@ const ProductOverview = () => {
             {/* Content */}
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Image */}
-              <div className="lg:col-span-4 bg-gray-100 flex justify-center items-center rounded-lg p-4 max-h-64 ">
-                <img
-                  src={
-                    (bidOverviewRes
-                      ? bidOverviewRes?.product?.image
-                      : productResponse?.mainProduct?.image) || '/no-image.webp'
-                  }
-                  alt="Product"
-                  className="object-contain h-full w-full mix-blend-darken"
-                />
+              <div className="lg:col-span-4 bg-gray-100 flex justify-center items-center rounded-lg p-4 max-h-64 relative">
+                <div className=" w-full h-full flex justify-center items-center">
+                  <img
+                    src={
+                      (bidOverviewRes
+                        ? bidOverviewRes?.product?.image
+                        : productResponse?.mainProduct?.image) || '/no-image.webp'
+                    }
+                    alt="Product"
+                    className="object-contain max-h-56"
+                  />
+                </div>
+                {soldProduct && (
+                      <img
+                        src="sold.png"
+                        alt="Sold"
+                        className="absolute top-[-34px] right-[-20px] w-28"
+                      />
+                    )}
               </div>
 
               {/* Product Info */}
@@ -881,7 +893,7 @@ const ProductOverview = () => {
                         onClick={() => handleAddToCart(productResponse?.mainProduct?._id)}
                         disabled={
                           addToCartLoading ||
-                          productResponse?.mainProduct?.userId?._id === userProfile?._id
+                          productResponse?.mainProduct?.userId?._id === userProfile?._id || soldProduct
                         }
                       >
                         {addToCartLoading ? (

@@ -43,7 +43,7 @@ const CloseDeal = () => {
     },
     {
       accessorKey: 'finalized_with',
-      header: 'Awarded To',
+      header: 'Buyer Name',
     },
     {
       accessorKey: 'requirement',
@@ -129,15 +129,15 @@ const CloseDeal = () => {
     },
 
     {
-      accessorKey: 'bid_to',
-      header: 'Buyer',
+      accessorKey: 'seller',
+      header: 'Seller',
     },
     {
       accessorKey: 'product',
       header: 'Product',
     },
     {
-      accessorKey: 'your_budget',
+      accessorKey: 'final_price',
       header: 'Final Price',
     },
     {
@@ -188,15 +188,16 @@ const CloseDeal = () => {
     fn: pendingApprovedFn,
     data: pendingApprovedData,
     loading: approvedLoading,
-  } = useFetch(requirementService.getApprovedPendingRequirements);
+  } = useFetch(requirementService.getRequirementAward);
   const {
     fn: completedApproveFn,
     data: completedApproveData,
     loading: completedLoading,
-  } = useFetch(requirementService.getCompletedApprovedRequirements);
+  } = useFetch(requirementService.getDealAwarded);
   const [completeRequirements, setCompleteRequirements] = useState([]);
   const [approvedRequirements, setApprovedRequirements] = useState([]);
   useEffect(() => {
+    console.log(tab)
     if (tab === 'approved_bids') {
       pendingApprovedFn();
     } else {
@@ -212,10 +213,10 @@ const CloseDeal = () => {
           productId: item?.product?._id,
           avatar: item?.product?.image,
           date: dateFormatter(item?.createdAt),
-          finalized_with: mergeName(item?.seller),
+          finalized_with: mergeName(item?.buyer),
           requirement: item?.product?.title,
           your_budget: item?.product?.minimumBudget,
-          final_budget: item?.finalBudget,
+          final_budget: item?.amount,
           dealStatus:
             item?.closedDealStatus === 'waiting_seller_approval' ||
             item?.closedDealStatus === 'pending'
@@ -233,11 +234,12 @@ const CloseDeal = () => {
           _id: item._id,
           productId: item?.product?._id,
           avatar: item?.product?.image,
-          bid_to: mergeName(item?.sellerDetails?.sellerId),
-          date: dateFormatter(item?.date),
+
+          date: dateFormatter(item?.closedAt),
           product: item?.product?.title,
           min_budget: item?.minBudget,
-          your_budget: item?.sellerDetails?.budgetAmount,
+          final_price: item?.amount,
+          seller:mergeName(item.seller),
           dealStatus:
             item?.closedDealStatus === 'waiting_seller_approval' ||
             item?.closedDealStatus === 'pending'
