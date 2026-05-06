@@ -26,6 +26,7 @@ const RequirementOverview = () => {
   const [requirementData, setRequirementData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState('');
+  const [isSoldProduct, setIsSoldProduct] = useState(false);
   let intervalRef = useRef(null);
 
   useEffect(() => {
@@ -50,6 +51,9 @@ const RequirementOverview = () => {
       // Use fetched data if available, otherwise fall back to location state
       const dataToUse =
         requirementData || (productData && productData.length > 0 ? productData[0] : null);
+
+      const isSoldProduct = requirementData?.product?.isSoldProduct;
+      setIsSoldProduct(isSoldProduct);
 
       if (dataToUse) {
         setCurrentProduct(dataToUse);
@@ -203,9 +207,10 @@ const RequirementOverview = () => {
     };
 
     // Initial call
-    updateTimer();
-
-    intervalRef.current = setInterval(updateTimer, 1000);
+    if (!isSoldProduct) {
+      updateTimer();
+      intervalRef.current = setInterval(updateTimer, 1000);
+    }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -244,12 +249,15 @@ const RequirementOverview = () => {
       {iterateData.map((item, idx) => (
         <div key={idx} className="grid grid-cols-1 lg:grid-cols-12 gap-6  p-4">
           {/* Image */}
-          <div className="lg:col-span-4 bg-gray-100 flex justify-center items-center rounded-lg p-4 h-48">
+          <div className="lg:col-span-4 relative bg-gray-100 flex justify-center items-center rounded-lg p-4 h-48">
             <img
               src={item.image || '/no-image.webp'}
               alt={item.title || 'Product'}
               className="object-contain h-full w-full rounded-lg mix-blend-darken"
             />
+            {isSoldProduct && (
+              <img src="/sold.png" alt="Sold" className="absolute top-[-34px] right-[-20px] w-28" />
+            )}
           </div>
 
           {/* Product Info */}
@@ -259,6 +267,8 @@ const RequirementOverview = () => {
             </h2>
             {loading || !timeLeft ? (
               <Skeleton className="h-8 w-24 rounded-full float-end" />
+            ) : isSoldProduct ? (
+              ''
             ) : timeLeft !== 'Expired' ? (
               <Button
                 variant="ghost"

@@ -42,7 +42,6 @@ const BidListing = () => {
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
   const [value, { isPending }] = useDebounce(search, 600);
-  console.log(fetchBidsResponse, 234);
   const columns = [
     {
       accessorKey: 'avtar',
@@ -106,21 +105,30 @@ const BidListing = () => {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        // const diff = row.getValue("status") as number;
-        const diff = row.original?.status?.toLowerCase() === 'rejected';
-        if (!row.original?.status) {
+        const status = row.original?.status?.toLowerCase();
+
+        if (!status || status === 'waiting for seller approval') {
           return (
-            <Badge className="bg-green-100 text-green-500 rounded-full px-2 w-20">Pending</Badge>
-          );
-        } else if (diff) {
-          return <Badge className="bg-red-100 text-red-500 rounded-full px-2 w-20">Rejected</Badge>;
-        } else {
-          return (
-            <Badge className="bg-green-100 text-green-500 rounded-full capitalize px-3 w-20">
-              {row.original?.status}
-            </Badge>
+            <Badge className="bg-gray-100 text-gray-600 rounded-full px-3 w-28">Pending</Badge>
           );
         }
+
+        if (status === 'rejected') {
+          return <Badge className="bg-red-100 text-red-500 rounded-full px-3 w-28">Rejected</Badge>;
+        }
+
+        if (status === 'closed') {
+          return (
+            <Badge className="bg-green-100 text-green-600 rounded-full px-3 w-28">Closed</Badge>
+          );
+        }
+
+        // Progress / ongoing
+        return (
+          <Badge className="bg-yellow-100 text-yellow-600 rounded-full px-3 w-28">
+            In Progress
+          </Badge>
+        );
       },
     },
     {
@@ -210,7 +218,9 @@ const BidListing = () => {
               ? 'Waiting for seller approval'
               : item?.closedDealStatus === 'rejected'
                 ? 'Rejected'
-                : 'Progress',
+                : item?.closedDealStatus === 'completed'
+                  ? 'Closed'
+                  : 'Progress',
         };
       });
 

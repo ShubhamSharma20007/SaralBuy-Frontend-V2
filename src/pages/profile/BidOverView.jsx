@@ -31,6 +31,7 @@ const BidOverview = () => {
   const [sellers, setSellers] = useState([]);
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState('');
+  const [isSoldProduct, setIsSoldProduct] = useState(false);
   let intervalRef = useRef(null);
   useEffect(() => {
     bidFn(bidId, limit, page);
@@ -122,6 +123,9 @@ const BidOverview = () => {
     if (bidRes) {
       const { totalSellers: totalCount, limit: pageLimit, page } = bidRes;
       const budget = bidRes?.product?.minimumBudget || 0;
+      const isSoldProduct = bidRes?.product?.isSoldProduct;
+
+      setIsSoldProduct(isSoldProduct);
 
       const mappedSellers =
         bidRes?.sellers?.map(item => {
@@ -173,10 +177,10 @@ const BidOverview = () => {
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     };
 
-    // Initial call
-    updateTimer();
-
-    intervalRef.current = setInterval(updateTimer, 1000);
+    if (!isSoldProduct) {
+      updateTimer();
+      intervalRef.current = setInterval(updateTimer, 1000);
+    }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -346,6 +350,8 @@ const BidOverview = () => {
                       </div>
                       {loading || !timeLeft ? (
                         <Skeleton className="h-8 w-24 rounded-full float-end" />
+                      ) : isSoldProduct ? (
+                        ''
                       ) : timeLeft !== 'Expired' ? (
                         <Button
                           variant="ghost"
