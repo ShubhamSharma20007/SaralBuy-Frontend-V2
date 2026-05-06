@@ -201,8 +201,7 @@ const BidListing = () => {
             dateFormatter(
               item.earliestDeliveryDate || item.product?.paymentAndDelivery?.ex_deliveryDate
             ) || 'N/A',
-          location:
-          item.product?.paymentAndDelivery?.organizationAddress || 'N/A',
+          location: item.product?.paymentAndDelivery?.organizationAddress || 'N/A',
           min_budget: item?.product?.minimumBudget,
           your_budget: currencyConvertor(item?.budgetQuation),
           status:

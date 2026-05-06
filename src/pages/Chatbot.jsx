@@ -189,7 +189,7 @@ const ChatArea = ({
 
   isOnline,
   socket,
-  productId
+  productId,
 }) => {
   const chatContainerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -281,18 +281,18 @@ const ChatArea = ({
   };
 
   // ── Close deal ─────────────────────────────
-const handleCloseDealClick = () => {
-  const payload = { productId: productId };
-  socket.emit(SOCKET_EVENTS.PRODUCT_SOLD, payload);
+  const handleCloseDealClick = () => {
+    const payload = { productId: productId };
+    socket.emit(SOCKET_EVENTS.PRODUCT_SOLD, payload);
 
-  socket.once(SOCKET_EVENTS.PRODUCT_SOLD, ({ isSoldProduct }) => {
-    if (isSoldProduct) {
-      toast.error('This product has already been sold!'); 
-    } else {
-      setShowBudgetDialog(true);
-    }
-  });
-};
+    socket.once(SOCKET_EVENTS.PRODUCT_SOLD, ({ isSoldProduct }) => {
+      if (isSoldProduct) {
+        toast.error('This product has already been sold!');
+      } else {
+        setShowBudgetDialog(true);
+      }
+    });
+  };
 
   const handleBudgetConfirm = amount => {
     setShowBudgetDialog(false);
@@ -704,14 +704,14 @@ const Chatbot = () => {
     updateSetRecentChats,
   } = useDispatchChat();
   const { recentChats, messages, onlineUsers } = useChatState();
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const { user } = useUserState();
   const [searchParams] = useSearchParams();
   const [focusTile, setFocusTile] = useState(-1);
   const [selectedContact, setSelectedContact] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
-const autoSelectedKeyRef = useRef(null);
+  const autoSelectedKeyRef = useRef(null);
   const state = location.state || {};
   const buyerId = state.buyerId;
   const productName = state.productName;
@@ -745,47 +745,41 @@ const autoSelectedKeyRef = useRef(null);
   const [pendingDealId, setPendingDealId] = useState(null);
   const [pendingDealAmount, setPendingDealAmount] = useState(0);
 
+  // Replace your existing auto-select useEffect with this:
+  useEffect(() => {
+    if (!productId || !sellerId) return;
 
+    const navKey = `${sellerId}_${productId}`;
 
-// Replace your existing auto-select useEffect with this:
-useEffect(() => {
-  if (!productId || !sellerId) return;
-  
-  const navKey = `${sellerId}_${productId}`;
-  
-  //  Already handled this navigation → don't interfere with manual selections
-  if (autoSelectedKeyRef.current === navKey) return;
-  
-  if (recentChats.length > 0) {
-    const tileIndex = recentChats.findIndex(
-      item => item.productId === productId && item.sellerId === sellerId
-    );
-    setFocusTile(tileIndex);
+    //  Already handled this navigation → don't interfere with manual selections
+    if (autoSelectedKeyRef.current === navKey) return;
 
-    if (tileIndex !== -1) {
-      autoSelectedKeyRef.current = navKey; // mark as handled
-      handleSelectContact(recentChats[tileIndex]);
+    if (recentChats.length > 0) {
+      const tileIndex = recentChats.findIndex(
+        item => item.productId === productId && item.sellerId === sellerId
+      );
+      setFocusTile(tileIndex);
+
+      if (tileIndex !== -1) {
+        autoSelectedKeyRef.current = navKey; // mark as handled
+        handleSelectContact(recentChats[tileIndex]);
+      }
     }
-  }
-}, [recentChats, productId, sellerId, location]);
+  }, [recentChats, productId, sellerId, location]);
 
-
-// ✅ Reset everything when navigating to a new chat partner
-// useEffect(() => {
-//   setSelectedContact(null);
-//   setIsClosingDeal(false);
-//   setIsDealClosed(false);
-//   setIsDealRejected(false);
-//   setWaitingSellerApproval(false);
-//   setIsSeller(false);
-//   setIsBuyer(false);
-//   setFinalBudget(0);
-//   setClosedDealId(null);
-//   setShowApprovalPopup(false);
-// }, [sellerId, productId]); // fires whenever the navigation target changes
-
-
- 
+  // ✅ Reset everything when navigating to a new chat partner
+  // useEffect(() => {
+  //   setSelectedContact(null);
+  //   setIsClosingDeal(false);
+  //   setIsDealClosed(false);
+  //   setIsDealRejected(false);
+  //   setWaitingSellerApproval(false);
+  //   setIsSeller(false);
+  //   setIsBuyer(false);
+  //   setFinalBudget(0);
+  //   setClosedDealId(null);
+  //   setShowApprovalPopup(false);
+  // }, [sellerId, productId]); // fires whenever the navigation target changes
 
   // ── DEAL_STATUS_UPDATE listener (buyer receives confirmation / both receive result)
   // ── DEAL_STATUS_UPDATE: handles live updates AND refresh restore ──────────────
@@ -992,11 +986,11 @@ useEffect(() => {
 
     socket.on(SOCKET_EVENTS.USER_CHATS, handleUserChats);
     return () => socket.off(SOCKET_EVENTS.USER_CHATS, handleUserChats);
-  }, [socket,location.state]);
+  }, [socket, location.state]);
 
   // ── Select contact ────────────────────────────────────────────────────────
   const handleSelectContact = contact => {
-    setLoading(true)
+    setLoading(true);
     setIsClosingDeal(false);
     setIsDealClosed(false);
     setIsDealRejected(false);
@@ -1019,11 +1013,11 @@ useEffect(() => {
     });
     socket.emit(SOCKET_EVENTS.MARK_READ, { roomId: contact.roomId, readerType: userType });
     setTimeout(() => {
-    socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
-  }, 300);
-  setTimeout(()=>{
-     setLoading(false)
-  },1000)
+      socket.emit(SOCKET_EVENTS.GET_USER_CHATS);
+    }, 300);
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
   };
 
   // ── Send message ──────────────────────────────────────────────────────────
@@ -1065,112 +1059,110 @@ useEffect(() => {
   };
 
   return (
-   <>
-   {
-    loading ?
- <div className="h-screen flex items-center justify-center text-lg">
-            <div className="loader"></div>
-          </div>
-        :
+    <>
+      {loading ? (
+        <div className="h-screen flex items-center justify-center text-lg">
+          <div className="loader"></div>
+        </div>
+      ) : (
         <div className="w-full max-w-7xl mx-auto px-4 mb-5">
-      <div className="h-[calc(100vh-100px)] border-chat-border rounded-lg overflow-hidden mt-5">
-        <div className="flex h-full gap-2">
-          {/* Sidebar */}
-          <div className="hidden md:block w-80 bg-gray-100 border-1 rounded-md">
-            {isLoadingChats ? (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Loading chats...</p>
-              </div>
-            ) : (
-              <ContactsList
-                onSelectContact={handleSelectContact}
-                contacts={recentChats}
-                selectedContactId={selectedContact?.roomId || null}
-                currentUserId={currentUserId}
-                focusTile={focusTile}
-              />
-            )}
-          </div>
-
-          {/* Main area */}
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Mobile header */}
-            <div className="md:hidden py-2 border-chat-border bg-chat-sidebar">
-              <div className="flex items-center justify-between px-4">
-                <h2 className="text-lg font-semibold text-foreground">Messages</h2>
-                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-80">
-                    <ContactsList
-                      onSelectContact={contact => {
-                        handleSelectContact(contact);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      contacts={recentChats}
-                      selectedContactId={selectedContact?.roomId || null}
-                      currentUserId={currentUserId}
-                    />
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </div>
-
-            {selectedContact ? (
-              <ChatArea
-                selectedContact={selectedContact}
-                userType={userType}
-                currentUserId={currentUserId}
-                messages={messages}
-                isClosingDeal={isClosingDeal}
-                isDealClosed={isDealClosed}
-                isDealRejected={isDealRejected}
-                waitingSellerApproval={waitingSellerApproval}
-                isSeller={isSeller}
-                isBuyer={isBuyer}
-                finalBudget={finalBudget}
-                closedDealId={closedDealId}
-                showRatingPopup={showRatingPopup}
-                setShowRatingPopup={setShowRatingPopup}
-                ratingLoading={ratingLoading}
-                lastClosedChatId={lastClosedChatId}
-                showApprovalPopup={showApprovalPopup}
-                setShowApprovalPopup={setShowApprovalPopup}
-                approvalLoading={approvalLoading}
-                onSendMessage={handleSendMessage}
-                onCloseDeal={handleCloseDeal}
-                onSubmitRating={handleSubmitRating}
-                onDealApproval={handleDealApproval}
-                isOnline={selectedContact?.isOnline || false}
-                socket={socket}
-                productId={productId}
-              />
-            ) : (
-              <div className="flex-1 flex items-center justify-center bg-background">
-                {recentChats.length === 0 ? (
-                  <div className="flex justify-center items-center h-full flex-col space-y-2">
-                    <img src="no-chat.webp" alt="" className="h-28 w-28" />
-                    <p className="text-center text-lg capitalize">No chats available</p>
+          <div className="h-[calc(100vh-100px)] border-chat-border rounded-lg overflow-hidden mt-5">
+            <div className="flex h-full gap-2">
+              {/* Sidebar */}
+              <div className="hidden md:block w-80 bg-gray-100 border-1 rounded-md">
+                {isLoadingChats ? (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-muted-foreground">Loading chats...</p>
                   </div>
                 ) : (
-                  <div className="text-center text-muted-foreground">
-                    <p className="text-sm">Choose a contact from the sidebar to start messaging</p>
+                  <ContactsList
+                    onSelectContact={handleSelectContact}
+                    contacts={recentChats}
+                    selectedContactId={selectedContact?.roomId || null}
+                    currentUserId={currentUserId}
+                    focusTile={focusTile}
+                  />
+                )}
+              </div>
+
+              {/* Main area */}
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Mobile header */}
+                <div className="md:hidden py-2 border-chat-border bg-chat-sidebar">
+                  <div className="flex items-center justify-between px-4">
+                    <h2 className="text-lg font-semibold text-foreground">Messages</h2>
+                    <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                      <SheetTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Menu className="h-5 w-5" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="left" className="p-0 w-80">
+                        <ContactsList
+                          onSelectContact={contact => {
+                            handleSelectContact(contact);
+                            setIsMobileMenuOpen(false);
+                          }}
+                          contacts={recentChats}
+                          selectedContactId={selectedContact?.roomId || null}
+                          currentUserId={currentUserId}
+                        />
+                      </SheetContent>
+                    </Sheet>
+                  </div>
+                </div>
+
+                {selectedContact ? (
+                  <ChatArea
+                    selectedContact={selectedContact}
+                    userType={userType}
+                    currentUserId={currentUserId}
+                    messages={messages}
+                    isClosingDeal={isClosingDeal}
+                    isDealClosed={isDealClosed}
+                    isDealRejected={isDealRejected}
+                    waitingSellerApproval={waitingSellerApproval}
+                    isSeller={isSeller}
+                    isBuyer={isBuyer}
+                    finalBudget={finalBudget}
+                    closedDealId={closedDealId}
+                    showRatingPopup={showRatingPopup}
+                    setShowRatingPopup={setShowRatingPopup}
+                    ratingLoading={ratingLoading}
+                    lastClosedChatId={lastClosedChatId}
+                    showApprovalPopup={showApprovalPopup}
+                    setShowApprovalPopup={setShowApprovalPopup}
+                    approvalLoading={approvalLoading}
+                    onSendMessage={handleSendMessage}
+                    onCloseDeal={handleCloseDeal}
+                    onSubmitRating={handleSubmitRating}
+                    onDealApproval={handleDealApproval}
+                    isOnline={selectedContact?.isOnline || false}
+                    socket={socket}
+                    productId={productId}
+                  />
+                ) : (
+                  <div className="flex-1 flex items-center justify-center bg-background">
+                    {recentChats.length === 0 ? (
+                      <div className="flex justify-center items-center h-full flex-col space-y-2">
+                        <img src="no-chat.webp" alt="" className="h-28 w-28" />
+                        <p className="text-center text-lg capitalize">No chats available</p>
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground">
+                        <p className="text-sm">
+                          Choose a contact from the sidebar to start messaging
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-
-   }
-  
-    
-   </>
+      )}
+    </>
   );
 };
 

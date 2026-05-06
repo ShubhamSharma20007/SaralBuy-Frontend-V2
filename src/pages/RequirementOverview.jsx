@@ -74,7 +74,9 @@ const RequirementOverview = () => {
             bid_buy:
               `${seller.seller?.firstName || ''} ${seller.seller?.lastName || ''}`.trim() ||
               'Anonymous Seller',
-            bid_amount: currencyConvertor(seller.budgetAmount) ? currencyConvertor(seller.budgetAmount) : 'N/A',
+            bid_amount: currencyConvertor(seller.budgetAmount)
+              ? currencyConvertor(seller.budgetAmount)
+              : 'N/A',
             chat_message: seller.message || 'Interested in your requirement',
             action: 'chat',
             sellerId: seller.seller?._id || seller._id || seller.userId,
@@ -96,7 +98,7 @@ const RequirementOverview = () => {
           partnerName: sellerName,
           partnerAvatar: sellerAvatar,
           isBuyer: true,
-          productName: currentProduct.product?.title
+          productName: currentProduct.product?.title,
         },
       });
     }

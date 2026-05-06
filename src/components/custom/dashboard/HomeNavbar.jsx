@@ -172,7 +172,7 @@ const renderMobileMenuItem = item => {
 
 const HomeNavbar = () => {
   const { user } = useUserState();
-  const { updateUserState} = useDispatchUser() // update state
+  const { updateUserState } = useDispatchUser(); // update state
   const { recentChats } = useChatState();
   const { updateSetRecentChats, updateLastMessage, updateUserStatus } = useDispatchChat();
   const notifications = MOCK_NOTIFICATIONS;
@@ -197,7 +197,7 @@ const HomeNavbar = () => {
   const [showMessageDropdown, setShowMessageDropdown] = React.useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = React.useState(false);
   const [openSheet, setOpenSheet] = React.useState(false);
-  const {fn:updateUserFn,data:updateUserRes} = useFetch(userService.updateProfile)
+  const { fn: updateUserFn, data: updateUserRes } = useFetch(userService.updateProfile);
   const productsRef = useRef(null);
 
   // ── Handlers (stubs — replace with real navigation / actions) ───────────
@@ -249,7 +249,7 @@ const HomeNavbar = () => {
           const latitude = position.coords.latitude;
           const longitude = position.coords.longitude;
           const location = await getLocation(longitude, latitude);
-          updateUserFn({currentLocation:location})
+          updateUserFn({ currentLocation: location });
           setCurrentLocation(location);
           // await updateProfile({ currentLocation: location })
         },
@@ -266,7 +266,7 @@ const HomeNavbar = () => {
   }
 
   useEffect(() => {
-    if (!user?.currentLocation  && user) {
+    if (!user?.currentLocation && user) {
       getGeoLocation();
     } else {
       setCurrentLocation(user?.currentLocation);
