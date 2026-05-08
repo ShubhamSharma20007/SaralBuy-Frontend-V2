@@ -28,3 +28,10 @@ Point-4
 
 Buyer ka requirement Awarded
 Seller ka deal awarded
+
+
+Point -5
+1. bid-overview  deal close status
+2.  time in prouct overview
+3. table search 
+4. proudct rating
