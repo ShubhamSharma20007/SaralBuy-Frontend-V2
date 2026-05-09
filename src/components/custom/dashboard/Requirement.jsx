@@ -1,4 +1,4 @@
-// import Banner from '@/Components/Banner/Banner';
+// import Banner from '@/components/Banner/Banner';
 import ItemCard from './ItemCard';
 // import { useCategoriesStore } from '@/zustand/getCategories';
 
@@ -10,7 +10,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/Components/ui/accordion';
+} from '@/components/ui/accordion';
 import { useCategory, useCategoryState } from '@/redux/hooks/useCategory';
 
 // const data = [

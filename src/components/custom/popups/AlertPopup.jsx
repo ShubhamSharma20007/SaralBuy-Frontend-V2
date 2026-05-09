@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/Components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog';
 import { CircleAlert } from 'lucide-react';
 
 const AlertPopup = ({ open, setOpen, message, deleteFunction, loading }) => {

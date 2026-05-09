@@ -4,7 +4,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '../../Components/ui/breadcrumb';
+} from '../../components/ui/breadcrumb';
+import { Breadcrumb } from '../../components/ui/breadcrumb';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Camera, House } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

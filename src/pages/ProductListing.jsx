@@ -9,7 +9,7 @@ import {
 } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { FunnelIcon } from '@heroicons/react/20/solid';
-import { Label } from '../Components/ui/label';
+import { Label } from '../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCategory, useCategoryState } from '@/redux/hooks/useCategory';
 import { Range } from 'react-range';
