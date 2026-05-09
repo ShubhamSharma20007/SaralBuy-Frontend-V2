@@ -11,7 +11,7 @@ import Profile from './pages/profile/Profile';
 import { AccountSettings } from './pages/profile/AccountSetting';
 import Cart from './pages/profile/Cart';
 import BidListing from './pages/profile/BidListing';
-import BidOverview from './pages/profile/BidOverview';
+import BidOverview from './pages/profile/BidOverView';
 import Requirements from './pages/profile/Requirements';
 import CloseDeal from './pages/profile/CloseDeal';
 import UpdateCreateProductForm from './pages/UpdateCreateProductForm';
