@@ -18,7 +18,7 @@ import UpdateCreateProductForm from './pages/UpdateCreateProductForm';
 import RequirementOverview from './pages/RequirementOverview';
 import NoRouteFound from './pages/404';
 import Loader from './components/custom/Loader';
-import Notification from "./pages/Notification"
+import Notification from './pages/Notification';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Chatbot = lazy(() => import('./pages/Chatbot'));
 
@@ -45,11 +45,7 @@ export default function AppRoutes() {
       <ScrollToTop />
       <Authentication open={open} setOpen={setOpen} />
       <HomeNavbar />
-      <Suspense
-        fallback={
-         <Loader/>
-        }
-      >
+      <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/requirement" element={<Requirement />} />
@@ -68,9 +64,9 @@ export default function AppRoutes() {
             <Route path="requirements-overview/:requirementId" element={<RequirementOverview />} />
           </Route>
           <Route path="/chat" element={<Chatbot />} />
-        
+
           <Route path="/bid-overview/:bidId" element={<BidOverview />} />
-          <Route path="*" element={<NoRouteFound/>} />
+          <Route path="*" element={<NoRouteFound />} />
         </Routes>
       </Suspense>
       <Footer />

@@ -1064,7 +1064,7 @@ const Chatbot = () => {
   return (
     <>
       {loading ? (
-         <Loader/>
+        <Loader />
       ) : (
         <div className="w-full max-w-7xl mx-auto px-4 mb-5">
           <div className="h-[calc(100vh-100px)] border-chat-border rounded-lg overflow-hidden mt-5">

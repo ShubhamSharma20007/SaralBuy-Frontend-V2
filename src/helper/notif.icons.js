@@ -1,4 +1,4 @@
-import { Bell, CheckCircle, FileText, Gavel, Star, XCircle } from "lucide-react";
+import { Bell, CheckCircle, FileText, Gavel, Star, XCircle } from 'lucide-react';
 
 export function getNotifMeta(type) {
   switch (type) {

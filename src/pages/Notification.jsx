@@ -1,12 +1,14 @@
-// Notification.tsx - Complete with infinite scroll
+// Notification.tsx - Complete with infinite scroll (FIXED)
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ListFilter, Trash2, Star, FileText, CheckCircle, XCircle, Handshake, Gavel, Bell } from 'lucide-react';
+import { ListFilter, Trash2, Handshake } from 'lucide-react';
 import AlertPopup from '@/components/custom/popups/AlertPopup';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import notificationService from '@/services/notification.service';
 import { getNotifMeta } from '@/helper/notif.icons';
 import { toast } from 'sonner';
+
+const PAGE_SIZE = 10;
 
 const Notification = () => {
   const [notifications, setNotifications] = useState([]);
@@ -15,65 +17,73 @@ const Notification = () => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [isAscSorting, setIsAscSorting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
 
-  const fetchNotifications = useCallback(async (pageNum = 1, reset = false, currentSortOrder = sortOrder) => {
-    try {
-      if (reset) setLoading(true);
-      const response = await notificationService.getNotifications(pageNum, 5, currentSortOrder);
-      const newNotifications = response.notifications || response || [];
-      const total = response.total || response.length;
-      
-      setTotalCount(total);
-      
-      if (reset) {
-        setNotifications(newNotifications);
-      } else {
-        setNotifications(prev => [...prev, ...newNotifications]);
+  const fetchNotifications = useCallback(
+    async (pageNum = 1, reset = false, currentSortOrder = sortOrder) => {
+      try {
+        if (reset) setLoading(true);
+
+        const response = await notificationService.getNotifications(
+          pageNum,
+          PAGE_SIZE,
+          currentSortOrder
+        );
+
+        const newNotifications = response.notifications || [];
+        const total = response.total ?? 0;
+        const serverHasMore = response.hasMore ?? false;
+
+        setTotalCount(total);
+
+        if (reset) {
+          setNotifications(newNotifications);
+        } else {
+          setNotifications(prev => [...prev, ...newNotifications]);
+        }
+        setHasMore(serverHasMore);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch notifications:', err);
+        setError(err.message || 'Failed to load notifications');
+      } finally {
+        setLoading(false);
       }
-      
-      setHasMore(pageNum * 10 < total);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch notifications:', err);
-      setError(err.message || 'Failed to load notifications');
-    } finally {
-      setLoading(false);
-    }
-  }, [sortOrder]);
+    },
+    []
+  );
 
   useEffect(() => {
     setPage(1);
-    fetchNotifications(1, true);
+    setHasMore(true);
+    fetchNotifications(1, true, sortOrder);
   }, [sortOrder]);
 
+  // FIX 3: Pass sortOrder explicitly to avoid stale closure
   const loadMore = () => {
     if (!hasMore) return;
     const nextPage = page + 1;
     setPage(nextPage);
-    fetchNotifications(nextPage, false);
+    fetchNotifications(nextPage, false, sortOrder);
   };
 
   const handleSorting = () => {
     const newSortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
     setSortOrder(newSortOrder);
-    setIsAscSorting(newSortOrder === 'asc');
-    setPage(1);
-    setHasMore(true);
+    // useEffect will trigger re-fetch automatically
   };
 
-  const handleDeleteClick = (notificationId) => {
+  const handleDeleteClick = notificationId => {
     setNotificationToDelete(notificationId);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
     if (!notificationToDelete) return;
-    
+
     setDeleteLoading(true);
     try {
       await notificationService.deleteNotification(notificationToDelete);
@@ -91,33 +101,28 @@ const Notification = () => {
     }
   };
 
-  const handleView = (notification) => {
-    // Handle view/navigation based on notification type
+  const handleView = notification => {
     console.log('View notification:', notification);
-    // Add your navigation logic here
   };
 
   const getNotificationIcon = (type, title) => {
     const { Icon, colorClass } = getNotifMeta(type);
-    
-    // Special handling for deal closed
+
     if (title === 'Deal Closed') {
       return <Handshake className="w-5 h-5 text-yellow-500 fill-yellow-500" />;
     }
-    
+
     return <Icon className={`w-5 h-5 ${colorClass.replace('bg-', 'text-')}`} />;
   };
 
   const getNotificationBgClass = (index, type) => {
-    const baseClass = index % 2 === 0 ? 'bg-orange-100/50' : 'bg-transparent';
-    
     if (type === 'deal_accepted') return 'bg-green-100/40';
     if (type === 'deal_rejected') return 'bg-red-100/40';
     if (type === 'deal_request') return 'bg-blue-100/50';
-    return baseClass;
+    return index % 2 === 0 ? 'bg-orange-100/50' : 'bg-transparent';
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     if (!dateString) return '';
     const date = new Date(dateString);
     const now = new Date();
@@ -133,13 +138,13 @@ const Notification = () => {
     return date.toLocaleDateString();
   };
 
-  const getDescriptionText = (notification) => {
+  const getDescriptionText = notification => {
     const { type, description, metadata, productId } = notification;
-    
+
     if (description) return description;
-    
+
     const productTitle = productId?.title || 'Product';
-    
+
     switch (type) {
       case 'new_bid':
         return `New quote received on "${productTitle}"`;
@@ -152,7 +157,7 @@ const Notification = () => {
       case 'chat_rating':
         return `You received a ${metadata?.rating || 0} star rating`;
       default:
-        return description || 'New notification';
+        return 'New notification';
     }
   };
 
@@ -162,93 +167,100 @@ const Notification = () => {
   };
 
   return (
-    <div className='grid space-y-5'>
+    <div className="grid space-y-5">
       <div className={`flex justify-between items-center mb-3`}>
         <p className="font-bold text-xl whitespace-nowrap tracking-tight text-gray-600">
           Notifications {totalCount > 0 && `(${totalCount})`}
         </p>
-        <Button 
-          onClick={handleSorting} 
-          variant={'ghost'} 
-          size={'icon'} 
-          className='w-24 flex gap-2 items-center justify-center text-sm font-medium text-gray-700 bg-transparent border-1 hover:bg-transparent cursor-pointer border-gray-700'
+        <Button
+          onClick={handleSorting}
+          variant={'ghost'}
+          size={'icon'}
+          className="w-24 flex gap-2 items-center justify-center text-sm font-medium text-gray-700 bg-transparent border-1 hover:bg-transparent cursor-pointer border-gray-700"
         >
-          Date {sortOrder === 'desc' ? '▼' : '▲'}
-          <ListFilter className='w-5 h-5' />
+          Date
+          {/* {sortOrder === 'desc' ? '▼' : '▲'} */}
+          <ListFilter className="w-5 h-5" />
         </Button>
       </div>
-      
+
       {loading && notifications.length === 0 && (
-        <div className="text-center text-gray-500 py-10">Loading notifications...</div>
+        <div className="text-center text-gray-500 py-10">
+          <div className="loader"></div>
+        </div>
       )}
-      
+
       {error && notifications.length === 0 && (
         <div className="text-center text-red-500 py-10">{error}</div>
       )}
-      
+
       {!loading && !error && notifications.length === 0 && (
         <div className="text-center text-gray-500 h-[60vh] flex justify-center items-center flex-col">
           <img alt="" className="h-28 w-28" src="/empty-cart.webp" />
-          <p className='text-gray-500 text-sm'>No notifications found.</p>
+          <p className="text-gray-500 text-sm">No notifications found.</p>
         </div>
       )}
-      
+
       {notifications.length > 0 && (
-        <InfiniteScroll
-          dataLength={notifications.length}
-          next={loadMore}
-          hasMore={hasMore}
-          loader={<div className="text-center text-gray-500 py-4">Loading more...</div>}
-          endMessage={<div className="text-center text-gray-400 py-4">No more notifications</div>}
-          scrollableTarget="notification-scroll-container"
-        >
-          <div id="notification-scroll-container" className="space-y-0">
-            {notifications.map((notif, idx) => {
-              const { type, title, _id, createdAt, seen } = notif;
-              const bgClass = getNotificationBgClass(idx, type);
-              const Icon = getNotificationIcon(type, title);
-              
-              return (
-                <div key={_id} className={`${!seen ? 'border-l-4 border-blue-500' : ''}`}>
-                  <div className={`p-4 grid ${bgClass} rounded-md space-y-2 relative group transition-all duration-200 hover:shadow-md`}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      onClick={() => handleDeleteClick(_id)}
+        <div id="notification-scroll-container" style={{ height: '70vh', overflowY: 'auto' }}>
+          <InfiniteScroll
+            dataLength={notifications.length}
+            next={loadMore}
+            hasMore={hasMore}
+            loader={<div className="text-center text-gray-500 py-4">Loading more...</div>}
+            endMessage={<div className="text-center text-gray-400 py-4">No more notifications</div>}
+            scrollableTarget="notification-scroll-container"
+          >
+            <div className="space-y-0">
+              {notifications.map((notif, idx) => {
+                const { type, title, _id, createdAt, seen } = notif;
+                const bgClass = getNotificationBgClass(idx, type);
+                const Icon = getNotificationIcon(type, title);
+
+                return (
+                  <div key={_id} className={`${!seen ? 'border-l-4 border-blue-500' : ''}`}>
+                    <div
+                      className={`p-4 grid ${bgClass} rounded-md space-y-2 border  relative group transition-all duration-200 `}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className='grid grid-cols-3 items-center gap-5'>
-                      <div className='text-md font-bold text-gray-800 capitalize col-span-2 flex items-center gap-2'>
-                        {Icon}
-                        <span className="break-words">{title}</span>
-                      </div>
-                      <p className='text-sm text-orange-500 col-span-1 text-right'>
-                        {formatDate(createdAt)}
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 items-center gap-5">
-                      <p className="text-sm font-medium text-gray-600 line-clamp-2 col-span-2">
-                        {getDescriptionText(notif)}
-                      </p>
-                      <Button
-                        variant="link"
-                        className="text-sm text-gray-600 col-span-1 text-right underline cursor-pointer p-0 h-auto hover:text-gray-900"
-                        onClick={() => handleView(notif)}
+                      {/* <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        onClick={() => handleDeleteClick(_id)}
                       >
-                        View
-                      </Button>
+                        <Trash2 className="h-4 w-4" />
+                      </Button> */}
+
+                      <div className="grid grid-cols-3 items-center gap-5">
+                        <div className="text-md font-bold text-gray-800 capitalize col-span-2 flex items-center gap-2">
+                          {Icon}
+                          <span className="break-words">{title}</span>
+                        </div>
+                        <p className="text-sm text-orange-500 col-span-1 text-right">
+                          {formatDate(createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-3 items-center gap-5">
+                        <p className="text-sm font-medium text-gray-600 line-clamp-2 col-span-2">
+                          {getDescriptionText(notif)}
+                        </p>
+                        {/* <Button
+                          variant="link"
+                          className="text-sm text-gray-600 col-span-1 text-right underline cursor-pointer p-0 h-auto hover:text-gray-900"
+                          onClick={() => handleView(notif)}
+                        >
+                          View
+                        </Button> */}
+                      </div>
                     </div>
+                    <div className=" pt-2 mx-[0.5px]"></div>
                   </div>
-                  <div className='border-b-2 pt-2 mx-[0.5px]'></div>
-                </div>
-              );
-            })}
-          </div>
-        </InfiniteScroll>
+                );
+              })}
+            </div>
+          </InfiniteScroll>
+        </div>
       )}
 
       <AlertPopup
