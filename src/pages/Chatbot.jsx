@@ -16,6 +16,7 @@ import ApprovalPopup from '@/components/custom/popups/ApprovalPopup';
 import BudgetInputDialog from '@/components/custom/popups/BudgetInputDialog';
 import { toast } from 'sonner';
 import RatingPopup from '@/components/custom/popups/RatingPopup';
+import Loader from '@/components/custom/Loader';
 
 // ─────────────────────────────────────────────
 // ContactsList — sidebar list of recent chats
@@ -1063,9 +1064,7 @@ const Chatbot = () => {
   return (
     <>
       {loading ? (
-        <div className="h-screen flex items-center justify-center text-lg">
-          <div className="loader"></div>
-        </div>
+         <Loader/>
       ) : (
         <div className="w-full max-w-7xl mx-auto px-4 mb-5">
           <div className="h-[calc(100vh-100px)] border-chat-border rounded-lg overflow-hidden mt-5">

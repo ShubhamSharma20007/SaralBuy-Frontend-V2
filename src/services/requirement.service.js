@@ -38,5 +38,9 @@ class RequirementService {
     // for saller
     return instance.get('/requirement/deal-awarded').then(res => res.data?.data || res.data);
   }
+    async getRequirementId(productId) {
+    // for saller
+    return instance.get('/requirement/get-requirement-id/'+productId).then(res => res.data?.data || res.data);
+  }
 }
 export default new RequirementService();

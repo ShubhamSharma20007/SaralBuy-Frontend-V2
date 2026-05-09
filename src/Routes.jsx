@@ -16,6 +16,9 @@ import Requirements from './pages/profile/Requirements';
 import CloseDeal from './pages/profile/CloseDeal';
 import UpdateCreateProductForm from './pages/UpdateCreateProductForm';
 import RequirementOverview from './pages/RequirementOverview';
+import NoRouteFound from './pages/404';
+import Loader from './components/custom/Loader';
+import Notification from "./pages/Notification"
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Chatbot = lazy(() => import('./pages/Chatbot'));
 
@@ -44,9 +47,7 @@ export default function AppRoutes() {
       <HomeNavbar />
       <Suspense
         fallback={
-          <div className="h-screen flex items-center justify-center text-lg">
-            <div className="loader"></div>
-          </div>
+         <Loader/>
         }
       >
         <Routes>
@@ -63,13 +64,13 @@ export default function AppRoutes() {
             <Route path="bid" element={<BidListing />} />
             <Route path="requirements" element={<Requirements />} />
             <Route path="deal" element={<CloseDeal />} />
-
+            <Route path="notification" element={<Notification />} />
             <Route path="requirements-overview/:requirementId" element={<RequirementOverview />} />
           </Route>
           <Route path="/chat" element={<Chatbot />} />
+        
           <Route path="/bid-overview/:bidId" element={<BidOverview />} />
-
-          <Route path="*" element={<h1>No Route Found</h1>} />
+          <Route path="*" element={<NoRouteFound/>} />
         </Routes>
       </Suspense>
       <Footer />

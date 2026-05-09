@@ -49,6 +49,8 @@ import { SOCKET_EVENTS } from '@/socket/socketEvents';
 import socket from '@/socket/socket';
 import { useChatState, useDispatchChat } from '@/redux/hooks/useChat';
 import userService from '@/services/user.service';
+import requirementService from '@/services/requirement.service';
+import { getNotifMeta } from '@/helper/notif.icons';
 const menu = [
   {
     title: 'Account',
@@ -71,80 +73,6 @@ const menu = [
     icon: <ShoppingCart className="w-5 h-5" />,
   },
 ];
-
-const MOCK_NOTIFICATIONS = [
-  {
-    _id: 'n1',
-    type: 'bid',
-    title: 'New bid received',
-    description: 'Ramesh placed a bid of ₹2,500 on your product.',
-    seen: false,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    _id: 'n2',
-    type: 'deal_accepted',
-    title: 'Deal accepted!',
-    description: 'Your deal for Mobile Phone has been accepted.',
-    seen: false,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    _id: 'n3',
-    type: 'deal_rejected',
-    title: 'Deal rejected',
-    description: 'Seller rejected your deal request for Laptop.',
-    seen: false,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    _id: 'n4',
-    type: 'deal_request',
-    title: 'New deal request',
-    description: 'Priya Sharma sent you a deal request.',
-    seen: false,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    _id: 'n5',
-    type: 'product',
-    title: 'Product match found',
-    description: 'A product matching your requirement was listed.',
-    seen: true,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    _id: 'n6',
-    type: 'chat_rating',
-    title: 'Rating received',
-    description: 'Ajay rated your conversation 5 stars.',
-    seen: true,
-    timestamp: new Date().toISOString(),
-  },
-];
-
-// ─── Helper: notification icon resolver ──────────────────────────────────────
-
-function getNotifMeta(type) {
-  switch (type) {
-    case 'bid':
-      return { Icon: Gavel, colorClass: 'bg-orange-500' };
-    case 'chat_rating':
-      return { Icon: Star, colorClass: 'bg-yellow-500' };
-    case 'deal_accepted':
-      return { Icon: CheckCircle, colorClass: 'bg-green-500' };
-    case 'deal_rejected':
-      return { Icon: XCircle, colorClass: 'bg-red-500' };
-    case 'deal_request':
-      return { Icon: FileText, colorClass: 'bg-blue-500' };
-    case 'product':
-      return { Icon: Box, colorClass: 'bg-orange-500' };
-    default:
-      return { Icon: Bell, colorClass: 'bg-gray-500' };
-  }
-}
-
-// ─── Mobile menu item renderer ────────────────────────────────────────────────
 
 const renderMobileMenuItem = item => {
   if (item.items) {
@@ -175,10 +103,11 @@ const HomeNavbar = () => {
   const { updateUserState } = useDispatchUser(); // update state
   const { recentChats } = useChatState();
   const { updateSetRecentChats, updateLastMessage, updateUserStatus } = useDispatchChat();
-  const notifications = MOCK_NOTIFICATIONS;
+  const [notifications, setNotifications] = useState([]);
   const unseenCount = notifications.filter(n => !n.seen).length;
   const { fn, data } = useFetch(productService.getSeachProduct);
   const [currentLocation, setCurrentLocation] = useState(user?.currentLocation ?? '');
+
   const unreadChatsCount = recentChats.reduce((acc, chat) => {
     const isBuyer = chat.buyerId === user?._id;
     const isSeller = chat.sellerId === user?._id;
@@ -198,6 +127,11 @@ const HomeNavbar = () => {
   const [showNotificationDropdown, setShowNotificationDropdown] = React.useState(false);
   const [openSheet, setOpenSheet] = React.useState(false);
   const { fn: updateUserFn, data: updateUserRes } = useFetch(userService.updateProfile);
+  const {
+    fn: getRequirementIdFn,
+    data: getRequirementIdRes,
+    setData: setRequirementIdRes,
+  } = useFetch(requirementService.getRequirementId);
   const productsRef = useRef(null);
 
   // ── Handlers (stubs — replace with real navigation / actions) ───────────
@@ -226,9 +160,42 @@ const HomeNavbar = () => {
       },
     });
   };
-  const handleNotificationClick = _notif => {
-    setShowNotificationDropdown(false); /* navigate */
+  const handleNotificationClick = async notif => {
+    setShowNotificationDropdown(false);
+    console.log(notif);
+    // Mark as read
+    socket.emit(SOCKET_EVENTS.NOTIFICATION_MARK_READ, { notifId: notif._id });
+    setNotifications(prev => prev.map(n => (n._id === notif._id ? { ...n, seen: true } : n)));
+
+    // Navigate to the relevant chat room if roomId exists
+    if (notif.roomId) {
+      const chat = recentChats.find(c => c.roomId === notif.roomId);
+      if (chat) {
+        const isBuyer = chat.buyerId === user?._id;
+        navigate('/chat', {
+          state: {
+            buyerId: chat.buyerId,
+            sellerId: chat.sellerId,
+            productName: chat.productName,
+            roomId: chat.roomId,
+            isBuyer,
+          },
+        });
+      }
+    } else {
+      // navigate to requirement section
+      if (!notif?.metadata?.productId) return;
+      await getRequirementIdFn(notif.metadata.productId);
+    }
   };
+
+  useEffect(() => {
+    if (getRequirementIdRes) {
+      navigate('/account/requirements-overview/' + getRequirementIdRes, {});
+      setRequirementIdRes(null);
+    }
+  }, [getRequirementIdRes]);
+
   const handleSearchSelect = _product => {
     setShowDropdown(false);
     setSearchText('');
@@ -410,6 +377,19 @@ const HomeNavbar = () => {
       socket.emit(SOCKET_EVENTS.ONLINE_USER);
     }
 
+    socket.emit(SOCKET_EVENTS.GET_NOTIFICATIONS);
+    socket.on(SOCKET_EVENTS.NOTIFICATIONS, notifs => {
+      setNotifications(notifs);
+    });
+    socket.off(SOCKET_EVENTS.NOTIFICATION_NEW);
+    socket.on(SOCKET_EVENTS.NOTIFICATION_NEW, notif => {
+      // setNotifications(prev => [notif, ...prev]);
+      setNotifications(prev => {
+        if (prev.some(n => n._id === notif._id)) return prev;
+        return [notif, ...prev];
+      });
+    });
+
     // for Online/Offline
     socket.on(SOCKET_EVENTS.USER_STATUS, ({ userId, isOnline }) => {
       updateUserStatus({ userId, isOnline });
@@ -421,6 +401,8 @@ const HomeNavbar = () => {
       socket.off(SOCKET_EVENTS.USER_CHATS);
       socket.off(SOCKET_EVENTS.UNREAD_UPDATE);
       socket.off(SOCKET_EVENTS.USER_STATUS);
+      socket.off(SOCKET_EVENTS.NOTIFICATIONS);
+      socket.off(SOCKET_EVENTS.NOTIFICATION_NEW);
       socket.disconnect();
     };
   }, [user?._id]);
@@ -643,7 +625,10 @@ const HomeNavbar = () => {
                 open={showNotificationDropdown}
                 onOpenChange={open => {
                   setShowNotificationDropdown(open);
-                  // on close: call markAsSeen(unseenIds) here
+                  if (!open && notifications.some(n => !n.seen)) {
+                    socket.emit(SOCKET_EVENTS.NOTIFICATION_MARK_ALL_READ);
+                    setNotifications(prev => prev.map(n => ({ ...n, seen: true })));
+                  }
                 }}
               >
                 <PopoverTrigger asChild>
@@ -687,8 +672,8 @@ const HomeNavbar = () => {
                                   {notif.description}
                                 </p>
                                 <span className="text-[10px] text-gray-400 mt-1 block">
-                                  {notif.timestamp
-                                    ? format(new Date(notif.timestamp), 'hh:mm a').toLowerCase()
+                                  {notif.createdAt
+                                    ? format(new Date(notif.createdAt), 'hh:mm a').toLowerCase()
                                     : ''}
                                 </span>
                               </div>

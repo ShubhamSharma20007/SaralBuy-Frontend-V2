@@ -19,7 +19,7 @@ const RequirementOverview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { requirementId } = useParams();
-  const productData = location.state?.products || [];
+  const productData = location.state?.products
   const [currentProduct, setCurrentProduct] = useState(null);
   const [bidData, setBidData] = useState([]);
   const [iterateData, setIterateData] = useState([]);
@@ -50,7 +50,7 @@ const RequirementOverview = () => {
     if (requirementData) {
       // Use fetched data if available, otherwise fall back to location state
       const dataToUse =
-        requirementData || (productData && productData.length > 0 ? productData[0] : null);
+  requirementData || (productData && productData.length > 0 ? productData[0] : null) || null
 
       const isSoldProduct = requirementData?.product?.isSoldProduct;
       setIsSoldProduct(isSoldProduct);
@@ -91,7 +91,7 @@ const RequirementOverview = () => {
         }
       }
     }
-  }, [requirementData, productData]);
+  }, [requirementData]);
   const handleChatNavigate = (sellerId, sellerName, sellerAvatar) => {
     if (currentProduct) {
       navigate('/chat?productId=' + currentProduct.product?._id, {
