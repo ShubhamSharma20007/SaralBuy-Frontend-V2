@@ -143,7 +143,7 @@ const HomeNavbar = () => {
     navigate('/account');
   };
   const handleCartClick = () => {
-    /* navigate("/account/cart") */
+    navigate('/account/cart');
   };
   const handleMessageClick = chat => {
     setShowMessageDropdown(false);

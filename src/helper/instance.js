@@ -1,5 +1,5 @@
 import axios from 'axios';
-let url =import.meta.env.VITE_API_BACKEND_URL;
+let url = import.meta.env.VITE_API_BACKEND_URL;
 
 const instance = axios.create({
   baseURL: url,

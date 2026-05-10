@@ -145,7 +145,7 @@ const Requirement = () => {
             className="grid space-y-2 w-full overflow-hidden"
             onValueChange={val => setTab(val)}
           >
-            <TabsList className="bg-transparent">
+            <TabsList className="">
               <TabsTrigger value="requirements" className="cursor-pointer min-w-32">
                 Posted
               </TabsTrigger>

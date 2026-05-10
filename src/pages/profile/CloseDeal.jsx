@@ -267,11 +267,11 @@ const CloseDeal = () => {
         {/* tabs */}
         <Tabs
           defaultValue="approved_bids"
-          className="grid space-y-2 w-full bg-transparent overflow-hidden"
+          className="grid space-y-2 w-full overflow-hidden"
           onValueChange={val => setTab(val)}
         >
-          <TabsList className="bg-transparent">
-            <TabsTrigger value="approved_bids" className={`cursor-pointer min-w-40 pr-3`}>
+          <TabsList className=" ">
+            <TabsTrigger value="approved_bids" className={`cursor-pointer min-w-44 pr-3  `}>
               Requirements Awarded{' '}
             </TabsTrigger>
             <TabsTrigger value="completed_requirements" className={`cursor-pointer `}>

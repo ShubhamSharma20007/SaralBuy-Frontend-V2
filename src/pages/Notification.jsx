@@ -218,7 +218,7 @@ const Notification = () => {
                 const Icon = getNotificationIcon(type, title);
 
                 return (
-                  <div key={_id} className={`${!seen ? 'border-l-4 border-blue-500' : ''}`}>
+                  <div key={_id} className={``}>
                     <div
                       className={`p-4 grid ${bgClass} rounded-md space-y-2 border  relative group transition-all duration-200 `}
                     >
@@ -234,7 +234,12 @@ const Notification = () => {
                       <div className="grid grid-cols-3 items-center gap-5">
                         <div className="text-md font-bold text-gray-800 capitalize col-span-2 flex items-center gap-2">
                           {Icon}
-                          <span className="break-words">{title}</span>
+                          <span className="break-words flex gap-2">
+                            {title}{' '}
+                            <div
+                              className={`${!seen ? 'w-2 h-2 rounded-full bg-orange-400' : ''}`}
+                            ></div>
+                          </span>
                         </div>
                         <p className="text-sm text-orange-500 col-span-1 text-right">
                           {formatDate(createdAt)}
