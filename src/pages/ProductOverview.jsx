@@ -130,15 +130,18 @@ const SellerForm = ({
 }) => {
   return (
     <form
-      className="lg:col-span-5 bg-gray-200/80 rounded-lg p-6 space-y-4"
+      className="w-full lg:col-span-5 bg-gray-200/80 rounded-lg p-3 sm:p-4 md:p-6 space-y-4"
       onSubmit={handleSubmit(onSubmit)}
     >
-      <h3 className="font-semibold text-orange-600">Seller Quotation Details</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <h3 className="font-semibold text-orange-600 text-base sm:text-lg">
+        Seller Quotation Details
+      </h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
         {userProfile?._id && (
           <>
-            <div>
-              <Label htmlFor="firstName" className="mb-2 text-sm">
+            <div className="w-full">
+              <Label htmlFor="firstName" className="mb-2 text-sm block">
                 First Name
               </Label>
               <Input
@@ -147,11 +150,12 @@ const SellerForm = ({
                 placeholder="First Name"
                 id="firstName"
                 {...register('firstName')}
-                className="bg-white select-none"
+                className="bg-white select-none w-full"
               />
             </div>
-            <div>
-              <Label htmlFor="lastName" className="mb-2 text-sm">
+
+            <div className="w-full">
+              <Label htmlFor="lastName" className="mb-2 text-sm block">
                 Last Name
               </Label>
               <Input
@@ -160,15 +164,16 @@ const SellerForm = ({
                 placeholder="Last Name"
                 id="lastName"
                 {...register('lastName')}
-                className="bg-white select-none"
+                className="bg-white select-none w-full"
               />
             </div>
           </>
         )}
 
         {/* Seller Type */}
-        <div>
-          <Label className="mb-2 text-sm">Seller Type</Label>
+        <div className="w-full">
+          <Label className="mb-2 text-sm block">Seller Type</Label>
+
           <Controller
             name="sellerType"
             control={control}
@@ -177,12 +182,24 @@ const SellerForm = ({
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select Seller Type" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="manufacturer">Manufacturer</SelectItem>
-                    <SelectItem value="trader_wholesaler">Trader / Wholesaler</SelectItem>
-                    <SelectItem value="distributor">Distributor</SelectItem>
-                    <SelectItem value="service_provider">Service Provider</SelectItem>
+                    <SelectItem value="manufacturer">
+                      Manufacturer
+                    </SelectItem>
+
+                    <SelectItem value="trader_wholesaler">
+                      Trader / Wholesaler
+                    </SelectItem>
+
+                    <SelectItem value="distributor">
+                      Distributor
+                    </SelectItem>
+
+                    <SelectItem value="service_provider">
+                      Service Provider
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -190,21 +207,24 @@ const SellerForm = ({
           />
         </div>
 
-        <div>
-          <Label htmlFor="budgetQuation" className="mb-2 text-sm">
+        {/* Quoted Price */}
+        <div className="w-full">
+          <Label htmlFor="budgetQuation" className="mb-2 text-sm block">
             Quoted Price(₹)
           </Label>
+
           <Input
             type="number"
             placeholder="Quoted Price"
-            className="bg-white"
+            className="bg-white w-full"
             {...register('budgetQuation')}
           />
         </div>
 
         {/* Price Basis */}
-        <div>
-          <Label className="mb-2 text-sm">Price Basis</Label>
+        <div className="w-full">
+          <Label className="mb-2 text-sm block">Price Basis</Label>
+
           <Controller
             name="priceBasis"
             control={control}
@@ -213,6 +233,7 @@ const SellerForm = ({
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select Price Basis" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem value="per_unit">Per Unit</SelectItem>
@@ -228,8 +249,9 @@ const SellerForm = ({
         </div>
 
         {/* Taxes */}
-        <div>
-          <Label className="mb-2 text-sm">Taxes</Label>
+        <div className="w-full">
+          <Label className="mb-2 text-sm block">Taxes</Label>
+
           <Controller
             name="taxes"
             control={control}
@@ -238,11 +260,20 @@ const SellerForm = ({
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select Taxes" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="inclusive_gst">Inclusive of GST</SelectItem>
-                    <SelectItem value="exclusive_gst">Exclusive of GST</SelectItem>
-                    <SelectItem value="gst_rate">GST Rate (%)</SelectItem>
+                    <SelectItem value="inclusive_gst">
+                      Inclusive of GST
+                    </SelectItem>
+
+                    <SelectItem value="exclusive_gst">
+                      Exclusive of GST
+                    </SelectItem>
+
+                    <SelectItem value="gst_rate">
+                      GST Rate (%)
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -250,20 +281,26 @@ const SellerForm = ({
           />
         </div>
 
-        <div>
-          <Label htmlFor="location" className="mb-2 text-sm">
+        {/* Location */}
+        <div className="w-full">
+          <Label htmlFor="location" className="mb-2 text-sm block">
             Location
           </Label>
+
           <Input
             type="text"
             placeholder="Location"
-            className="bg-white"
+            className="bg-white w-full"
             {...register('location')}
           />
         </div>
 
-        <div>
-          <Label className="mb-2 text-sm">Delivery Timeline</Label>
+        {/* Delivery Timeline */}
+        <div className="w-full">
+          <Label className="mb-2 text-sm block">
+            Delivery Timeline
+          </Label>
+
           <Controller
             control={control}
             name="earliestDeliveryDate"
@@ -280,8 +317,9 @@ const SellerForm = ({
         </div>
 
         {/* Freight Terms */}
-        <div>
-          <Label className="mb-2 text-sm">Freight Terms</Label>
+        <div className="w-full">
+          <Label className="mb-2 text-sm block">Freight Terms</Label>
+
           <Controller
             name="freightTerms"
             control={control}
@@ -290,11 +328,14 @@ const SellerForm = ({
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select Freight Terms" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem value="ex_works">Ex-Works</SelectItem>
                     <SelectItem value="fob">FOB</SelectItem>
-                    <SelectItem value="delivered">Delivered (DAP / DDP)</SelectItem>
+                    <SelectItem value="delivered">
+                      Delivered (DAP / DDP)
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -303,8 +344,9 @@ const SellerForm = ({
         </div>
 
         {/* Payment Terms */}
-        <div>
-          <Label className="mb-2 text-sm">Payment Terms</Label>
+        <div className="w-full">
+          <Label className="mb-2 text-sm block">Payment Terms</Label>
+
           <Controller
             name="paymentTerms"
             control={control}
@@ -313,12 +355,22 @@ const SellerForm = ({
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select Payment Terms" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem value="advance">Advance</SelectItem>
-                    <SelectItem value="partial_advance">Partial Advance</SelectItem>
-                    <SelectItem value="on_delivery">On Delivery</SelectItem>
-                    <SelectItem value="credit">Credit (X days)</SelectItem>
+
+                    <SelectItem value="partial_advance">
+                      Partial Advance
+                    </SelectItem>
+
+                    <SelectItem value="on_delivery">
+                      On Delivery
+                    </SelectItem>
+
+                    <SelectItem value="credit">
+                      Credit (X days)
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -326,42 +378,51 @@ const SellerForm = ({
           />
         </div>
 
-        <div className="w-full col-span-2">
-          <Label htmlFor="buyerNote" className="mb-2 text-sm">
+        {/* Buyer Note */}
+        <div className="w-full col-span-1 sm:col-span-2">
+          <Label htmlFor="buyerNote" className="mb-2 text-sm block">
             Buyer Note
           </Label>
+
           <Textarea
             {...register('buyerNote')}
             placeholder="Short message (hard limit: 300 characters)"
-            className="bg-white w-full"
+            className="bg-white w-full min-h-[100px] resize-none"
           />
         </div>
       </div>
 
-      {!bidOverviewRes ? (
-        <Button
-          type="submit"
-          disabled={
-            productResponse?.mainProduct?.userId?._id === userProfile?._id ||
-            createBidLoading ||
-            soldProduct
-          }
-          variant={'ghost'}
-          className="w-32 float-end border text-xs bg-orange-700 transition-all ease-in-out duration-300 hover:bg-orange-600 text-white hover:text-white cursor-pointer"
-        >
-          Place Quote
-        </Button>
-      ) : (
-        <Button
-          type="submit"
-          disabled={updateUserBidDetsLoading}
-          variant={'ghost'}
-          className="w-32 float-end border shadow-orange-500 border-orange-500 bg-orange-600 transition-all ease-in-out duration-300 hover:bg-orange-500 text-white hover:text-white cursor-pointer"
-        >
-          {updateUserBidDetsLoading ? <Spinner className="w-5 h-5 animate-spin" /> : 'Update Bid'}
-        </Button>
-      )}
-      <div></div>
+      {/* Button */}
+      <div className="flex justify-end pt-2">
+        {!bidOverviewRes ? (
+          <Button
+            type="submit"
+            disabled={
+              productResponse?.mainProduct?.userId?._id ===
+                userProfile?._id ||
+              createBidLoading ||
+              soldProduct
+            }
+            variant={'ghost'}
+            className="w-full sm:w-32 h-11 border text-xs sm:text-sm bg-orange-700 transition-all ease-in-out duration-300 hover:bg-orange-600 text-white hover:text-white cursor-pointer"
+          >
+            Place Quote
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            disabled={updateUserBidDetsLoading}
+            variant={'ghost'}
+            className="w-full sm:w-32 h-11 border shadow-orange-500 border-orange-500 bg-orange-600 transition-all ease-in-out duration-300 hover:bg-orange-500 text-white hover:text-white cursor-pointer"
+          >
+            {updateUserBidDetsLoading ? (
+              <Spinner className="w-5 h-5 animate-spin" />
+            ) : (
+              'Update Bid'
+            )}
+          </Button>
+        )}
+      </div>
     </form>
   );
 };
@@ -613,7 +674,7 @@ const ProductOverview = () => {
 
   useEffect(() => {
     if (error === 'invalid product ID') {
-      // send to 404 page
+     
     }
   }, []);
 
@@ -756,24 +817,8 @@ const ProductOverview = () => {
                         ? bidOverviewRes?.product?.createdAt
                         : productResponse?.mainProduct?.createdAt
                     )}
-                    {soldProduct && dealSellerRating > 0 && (
-                      <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <Star
-                            key={star}
-                            className={`w-5 h-5 ${
-                              star <= dealSellerRating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'fill-gray-200 text-gray-200'
-                            }`}
-                          />
-                        ))}
-                        {/* <span className="text-xs text-gray-500 ml-1">{dealSellerRating}/5</span> */}
-                      </div>
-                    )}
-                  </h2>
-
-                  {/* product Rating */}
+                    
+                     {/* product Rating */}
                   {soldProduct ? (
                     ''
                   ) : (productViewLoading || bidOverLoading) && !timeLeft ? (
@@ -793,6 +838,9 @@ const ProductOverview = () => {
                       Expired
                     </Button>
                   )}
+                  </h2>
+
+                 
                 </div>
 
                 <h2 className="text-xl font-bold capitalize">
@@ -865,6 +913,22 @@ const ProductOverview = () => {
                     </span>
                   </div>
                 </div>
+
+                {soldProduct && dealSellerRating > 0 && (
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <Star
+                            key={star}
+                            className={`w-5 h-5 ${
+                              star <= dealSellerRating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'fill-gray-200 text-gray-200'
+                            }`}
+                          />
+                        ))}
+                        {/* <span className="text-xs text-gray-500 ml-1">{dealSellerRating}/5</span> */}
+                      </div>
+                    )}
 
                 {/* Buttons */}
                 {!isMergeQuote && (

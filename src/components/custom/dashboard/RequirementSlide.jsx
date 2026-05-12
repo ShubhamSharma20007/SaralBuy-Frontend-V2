@@ -9,7 +9,7 @@ const RequirementSlide = () => {
     recenReqFn();
   }, []);
 
-  console.log(recentReqRes);
+
   return (
     <div
       className={` px-8 sm:px-16 relative bg-no-repeat z-0 bg-cover  py-10  min-h-82 bg-[url('./grid.png')]`}

@@ -23,12 +23,19 @@ export function AccountSettings() {
   const { user } = useUserState();
   const { updateUserState } = useDispatchUser();
   const [open, setOpen] = useState(false);
+
   const {
     fn: updateProfilefn,
     data: updateProfileRes,
     loading,
   } = useFetch(userService.updateProfile);
-  const { fn: logoutFn, data: logoutRes, loading: logoutLoading } = useFetch(userService.logout);
+
+  const {
+    fn: logoutFn,
+    data: logoutRes,
+    loading: logoutLoading,
+  } = useFetch(userService.logout);
+
   const {
     handleSubmit,
     formState: { errors },
@@ -50,7 +57,9 @@ export function AccountSettings() {
   useEffect(() => {
     if (logoutRes) {
       toast.success('You are Logged out');
+
       updateUserState(null);
+
       reset({
         phone: '',
         firstName: '',
@@ -85,19 +94,18 @@ export function AccountSettings() {
 
   async function onSubmit(data) {
     const formData = new FormData();
+
     senitizeField(data.firstName, 'First Name');
     senitizeField(data.lastName, 'Last Name');
     senitizeField(data.email, 'Email');
-    // senitizeField(data.phone,'Phone')
+
     formData.append('firstName', data.firstName);
     formData.append('lastName', data.lastName);
     formData.append('email', data.email);
-    // formData.append("phone", data.phone)
     formData.append('address', data.address);
     formData.append('aadhaarNumber', data.aadhaarNumber);
     formData.append('businessName', data.businessName);
 
-    // Append file if selected
     if (fileDoc) {
       formData.append('document', fileDoc);
     }
@@ -113,210 +121,208 @@ export function AccountSettings() {
   }, [updateProfileRes]);
 
   useEffect(() => {
-    if (!user?.firstName && !user?.phone && !user?.lastName && !user?.email && !user?.address) {
+    if (
+      !user?.firstName &&
+      !user?.phone &&
+      !user?.lastName &&
+      !user?.email &&
+      !user?.address
+    ) {
       return;
     }
+
     for (let i = 0; i < Object.entries(errors).length; i++) {
       toast.error(Object.entries(errors)[i][1]?.message);
       break;
     }
   }, [errors]);
+
   return (
-    <div className="space-y-4">
-      {/* Personal Details */}
-      <div className="flex justify-between items-center font-semibold w-full mb-3">
-        <p className="font-bold text-xl whitespace-nowrap   tracking-tight text-gray-600 ">
+    <div className="space-y-4 w-full">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 font-semibold w-full mb-3">
+        <p className="font-bold text-lg sm:text-xl tracking-tight text-gray-600">
           Profile Details
         </p>
       </div>
+
       <Authentication setOpen={setOpen} open={open} />
-      <Card className="shadow-none bg-transparent border-0 outline-0 py-0">
+
+      <Card className="shadow-none bg-transparent border-0 outline-0 py-0 w-full">
         <form
           onSubmit={handleSubmit(onSubmit, () => {
             if (!user) {
               setOpen(true);
             }
           })}
-          className=" p-2"
+          className="p-2 sm:p-3 md:p-4"
         >
-          <div className="space-y-4  p-5 rounded-md ">
-            {/* <p className="font-[700] text-gray-600">Personal Information</p> */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-gray-600 gap-0" htmlFor="first-name">
-                  First Name<span className="text-red-500">*</span>
+          <div className="space-y-4 p-3 sm:p-5 rounded-md">
+            {/* First + Last Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2 w-full">
+                <Label
+                  className="text-gray-600 gap-0 text-sm"
+                  htmlFor="first-name"
+                >
+                  First Name
+                  <span className="text-red-500">*</span>
                 </Label>
+
                 <Input
                   id="first-name"
                   placeholder="Enter first name"
-                  className="bg-transparent"
+                  className="bg-transparent w-full"
                   {...register('firstName')}
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-gray-600 gap-0" htmlFor="last-name">
-                  Last Name<span className="text-red-500">*</span>
+
+              <div className="space-y-2 w-full">
+                <Label
+                  className="text-gray-600 gap-0 text-sm"
+                  htmlFor="last-name"
+                >
+                  Last Name
+                  <span className="text-red-500">*</span>
                 </Label>
+
                 <Input
                   id="last-name"
                   placeholder="Enter last name"
-                  className="bg-transparent"
+                  className="bg-transparent w-full"
                   {...register('lastName')}
                 />
               </div>
             </div>
-            <div className="grid  gap-4 ">
-              <div className="space-y-2">
-                <Label className="text-gray-600" htmlFor="business">
+
+            {/* Business Name */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2 w-full">
+                <Label className="text-gray-600 text-sm" htmlFor="business">
                   Business Name
                 </Label>
+
                 <div className="flex items-center gap-2 relative">
                   <Input
                     id="business"
                     type="text"
                     placeholder="Business Name"
                     {...register('businessName')}
-                    className="pr-16 bg-transparent"
+                    className="pr-16 bg-transparent w-full"
                   />
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 ">
-              <div className="space-y-2">
-                <Label className="text-gray-600 gap-0" htmlFor="email">
-                  Email<span className="text-red-500">*</span>
+
+            {/* Email + Phone */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2 w-full">
+                <Label
+                  className="text-gray-600 gap-0 text-sm"
+                  htmlFor="email"
+                >
+                  Email
+                  <span className="text-red-500">*</span>
                 </Label>
-                <div className="flex items-center gap-2 relative">
+
+                <div className="relative">
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter email"
                     {...register('email')}
-                    className="pr-16 bg-transparent"
+                    className="bg-transparent w-full pr-28 sm:pr-32"
                   />
+
                   <Button
                     type="button"
                     variant="link"
-                    className="p-0 text-orange-600 bg-transparent  cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 "
+                    className="p-0 text-xs sm:text-sm text-orange-600 bg-transparent cursor-pointer absolute right-2 top-1/2 -translate-y-1/2"
                   >
                     Verify Email
                   </Button>
                 </div>
               </div>
-              <div className="space-y-2 cursor-not-allowed">
-                <Label className="text-gray-600 gap-0 " htmlFor="phone">
-                  Phone<span className="text-red-500">*</span>
+
+              <div className="space-y-2 cursor-not-allowed w-full">
+                <Label
+                  className="text-gray-600 gap-0 text-sm"
+                  htmlFor="phone"
+                >
+                  Phone
+                  <span className="text-red-500">*</span>
                 </Label>
+
                 <Input
                   disabled
                   type="text"
                   inputMode="numeric"
-                  className="bg-transparent"
-                  placeholder="Enter phone number "
+                  className="bg-transparent w-full"
+                  placeholder="Enter phone number"
                   {...register('phone')}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-gray-600 gap-0" htmlFor="address">
-                Address<span className="text-red-500">*</span>
+            {/* Address */}
+            <div className="space-y-2 w-full">
+              <Label
+                className="text-gray-600 gap-0 text-sm"
+                htmlFor="address"
+              >
+                Address
+                <span className="text-red-500">*</span>
               </Label>
+
               <div className="relative">
                 <Textarea
                   cols={10}
                   id="address"
-                  className="min-h-24 pb-10 max-w-full whitespace-pre-wrap break-words"
+                  className="min-h-24 w-full max-w-full whitespace-pre-wrap break-words resize-none"
                   placeholder="Enter address"
                   {...register('address')}
                 />
-                {/* <Button
-                    type="button"
-                    variant="link"
-                    className="p-0 text-orange-600 cursor-pointer absolute right-5 bottom-2 gap-1"
-                  >
-                    <Plus className="w-4 h-4"/>
-                    Add Address
-                  </Button> */}
               </div>
             </div>
           </div>
 
-          {/* Aadhaar Verification */}
-          {/* <div className="space-y-4 border border-gray-200 shadow-sm p-5 rounded-md">
-              <p className="font-[700] text-gray-600">Aadhaar Verification</p>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-gray-600" htmlFor="aadhaar-number">Aadhaar Number</Label>
-                  <Input
-                    id="aadhaar-number"
-                    placeholder="Enter Aadhaar Number"
-                         className="bg-transparent"
-                    {...register("aadhaarNumber")}
-                  />
-                </div>
-                <div
-                  className="space-y-2 cursor-pointer"
-                  onClick={() => docRef.current?.click()}
-                >
-                  <Label className="text-gray-600" htmlFor="aadhaar-image">Aadhaar Card Image</Label>
-                  <div className="border rounded-md p-4 flex flex-col items-center justify-center text-sm text-muted-foreground">
-                    <div className="flex flex-col py-5 items-center">
-                      <div className="flex space-x-3 items-center">
-                        <CloudUpload className="h-6 w-6 mb-2 text-gray-500" />
-                        <Button type="button" variant="link" className="p-0">
-                          Upload the Aadhaar Image
-                        </Button>
-                      </div>
-                      {fileDoc && (
-                        <p className="text-xs mt-2 text-green-600">
-                          {fileDoc.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.jpg,.png"
-                    hidden
-                    ref={docRef}
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        setFileDoc(e.target.files[0])
-                      }
-                    }}
-                  />
-
-                </div>
-              </div>
-            </div> */}
-
-          {/* Submit button */}
-          <div className="flex justify-end">
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4">
             {user ? (
               <Button
                 disabled={logoutLoading}
-                className=" w-32 cursor-pointer text-sm"
+                className="w-full sm:w-32 cursor-pointer text-sm"
                 variant="destructive"
                 onClick={() => logoutFn()}
+                type="button"
               >
-                Log out
+                {logoutLoading ? (
+                  <Spinner className="w-5 h-5 animate-spin" />
+                ) : (
+                  'Log out'
+                )}
               </Button>
             ) : (
               <Button
                 disabled={logoutLoading}
-                className=" w-32 cursor-pointer text-sm bc"
+                className="w-full sm:w-32 cursor-pointer text-sm bc"
                 onClick={() => logoutFn()}
+                type="button"
               >
                 Login
               </Button>
             )}
+
             <Button
               type="submit"
-              className="cursor-pointer w-32 ml-4 bc text-sm"
+              className="cursor-pointer w-full sm:w-32 bc text-sm"
               disabled={loading}
             >
-              {loading ? <Spinner className="w-5 h-5 animate-spin " /> : 'Save Profile'}
+              {loading ? (
+                <Spinner className="w-5 h-5 animate-spin" />
+              ) : (
+                'Save Profile'
+              )}
             </Button>
           </div>
         </form>

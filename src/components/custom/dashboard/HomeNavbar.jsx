@@ -18,6 +18,8 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  CuboidIcon,
+  NotebookPen,
 } from 'lucide-react';
 
 import { Accordion, AccordionItem, AccordionTrigger } from '../../../components/ui/accordion';
@@ -53,46 +55,67 @@ import requirementService from '@/services/requirement.service';
 import { getNotifMeta } from '@/helper/notif.icons';
 const menu = [
   {
-    title: 'Account',
+    title: 'Profile',
     url: '/account',
     icon: <CircleUserRound className="w-5 h-5" />,
-  },
-  {
-    title: 'Messages',
-    url: '/chat',
-    icon: <MessageCircleMore className="w-5 h-5" />,
-  },
-  {
-    title: 'Notifications',
-    url: '/account/notification',
-    icon: <Bell className="w-5 h-5" />,
   },
   {
     title: 'Cart',
     url: '/account/cart',
     icon: <ShoppingCart className="w-5 h-5" />,
   },
+  // {
+  //   title: 'Messages',
+  //   url: '/chat',
+  //   icon: <MessageCircleMore className="w-5 h-5" />,
+  // },
+  {
+    title: 'Quotes Submitted',
+    url: '/account/bid',
+    icon: <CuboidIcon className="w-5 h-5" />,
+  },
+  {
+    title: 'Requirements (Posted / Draft)',
+    url: '/account/requirements',
+    icon: <NotebookPen className="w-5 h-5" />,
+  },
+  {
+    title: 'Closed Deal',
+    url: '/account/deal',
+    icon: <Handshake className="w-5 h-5" />,
+  },
+  {
+    title: 'Notifications',
+    url: '/account/notification',
+    icon: <Bell className="w-5 h-5" />,
+  },
 ];
 
-const renderMobileMenuItem = item => {
+const renderMobileMenuItem = (item, setOpenSheet, navigate) => {
   if (item.items) {
     return (
-      <AccordionItem key={item.title} value={item.title} className="border-b-0">
-        <AccordionTrigger className="text-md py-0 font-semibold hover:no-underline">
+      <AccordionItem key={item.title} value={item.title} className="border-b border-gray-100">
+        <AccordionTrigger className="py-3 text-sm sm:text-base font-medium hover:no-underline">
           {item.title}
         </AccordionTrigger>
       </AccordionItem>
     );
   }
+
+  const handleNavigate = url => {
+    navigate(url);
+    setOpenSheet(false);
+  };
+
   return (
-    <Link
+    <button
       key={item.title}
-      to={item.url}
-      className="text-md font-semibold text-gray-700 flex items-center gap-2 py-2"
+      onClick={() => handleNavigate(item.url)}
+      className="w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm sm:text-base font-medium text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
     >
-      {item.icon}
-      {item.title}
-    </Link>
+      <span className="shrink-0">{item.icon}</span>
+      <span>{item.title}</span>
+    </button>
   );
 };
 
@@ -162,7 +185,6 @@ const HomeNavbar = () => {
   };
   const handleNotificationClick = async notif => {
     setShowNotificationDropdown(false);
-    console.log(notif);
     // Mark as read
     socket.emit(SOCKET_EVENTS.NOTIFICATION_MARK_READ, { notifId: notif._id });
     setNotifications(prev => prev.map(n => (n._id === notif._id ? { ...n, seen: true } : n)));
@@ -196,10 +218,14 @@ const HomeNavbar = () => {
     }
   }, [getRequirementIdRes]);
 
-  const handleSearchSelect = _product => {
+  const handleSearchSelect = p => {
     setShowDropdown(false);
+    setProducts([]);
     setSearchText('');
-    /* navigate(`/product-listing?_id=${p._id}&title=${p.title}`) */
+    flush();
+    navigate(
+      `/product-listing?_id=${encodeURIComponent(p._id)}&title=${encodeURIComponent(p.title)}`
+    );
   };
   const handleSearchKeyPress = e => {
     if (e.key === 'Enter' && text.trim()) {
@@ -252,7 +278,7 @@ const HomeNavbar = () => {
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-md w-full" />
           ))
-        ) : products.length > 0 ? (
+        ) : products?.length > 0 ? (
           products.map(p => (
             <Card
               key={p._id}
@@ -546,6 +572,7 @@ const HomeNavbar = () => {
                             src={p.image || '/no-image.webp'}
                             alt={p.title}
                           />
+
                           <div className="flex-1">
                             <p className="text-md font-semibold text-orange-600 ">{p.title}</p>
                             <p className="text-sm text-gray-600 line-clamp-2">{p.description}</p>
@@ -805,12 +832,13 @@ const HomeNavbar = () => {
           <div className="block lg:hidden">
             <div className="flex items-center justify-between">
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-2">
-                <span className="text-xl font-extrabold text-orange-500 tracking-tight">
-                  Saral<span className="text-gray-700">Buy</span>
-                </span>
+              <Link to={'/'}>
+                <img
+                  src={saralBuyLogo}
+                  className="max-h-12 mix-blend-darken  dark:invert"
+                  alt={'company logo'}
+                />
               </Link>
-
               {/* Mobile Search */}
               <div className="relative w-1/2">
                 <Input
@@ -831,45 +859,46 @@ const HomeNavbar = () => {
               {/* Sheet Trigger */}
               <Sheet open={openSheet} onOpenChange={setOpenSheet}>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Menu className="size-4" />
+                  <Button variant="outline" size="icon" className="shrink-0 rounded-md">
+                    <Menu className="size-5" />
                   </Button>
                 </SheetTrigger>
 
-                <SheetContent className="overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>
-                      <div className="flex items-center relative">
-                        <MapPin className="w-4 h-4 text-orange-500 rounded-full absolute top-1/2 left-3 -translate-y-1/2" />
+                <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-0 overflow-y-auto">
+                  {/* Header */}
+                  <SheetHeader className="border-b bg-white px-4 py-4 sticky top-0 z-10">
+                    <SheetTitle className="w-full">
+                      <div className="flex items-center relative w-full">
+                        <MapPin className="w-4 h-4 text-orange-500 absolute left-3 top-1/2 -translate-y-1/2" />
+
                         <Input
                           readOnly
                           placeholder="Location..."
-                          className="border-b-[1.5px] max-w-[85%] bg-transparent pl-6 text-sm border-x-0 border-t-0 shadow-none rounded-none border-b-black focus-visible:ring-0 focus:outline-0 focus:shadow-none"
+                          className="w-full bg-gray-50 pl-9 text-sm border border-gray-200 shadow-none focus-visible:ring-0"
                           defaultValue={currentLocation}
                         />
                       </div>
                     </SheetTitle>
                   </SheetHeader>
 
-                  <div className="flex flex-1 flex-col gap-3 px-4 mt-4">
-                    <Accordion type="single" collapsible className="flex w-full flex-col gap-4">
-                      {/* Switch between menu / accountMenu based on your router location */}
+                  {/* Menu Items */}
+                  <div className="flex flex-col px-2">
+                    <Accordion type="single" collapsible className="flex w-full flex-col gap-1">
                       {menu.map(item => (
                         <React.Fragment key={item.title}>
-                          {renderMobileMenuItem(item)}
+                          {renderMobileMenuItem(item, setOpenSheet, navigate)}
                         </React.Fragment>
                       ))}
                     </Accordion>
                   </div>
 
-                  <SheetFooter className="mt-4">
+                  {/* Footer */}
+                  <SheetFooter className="px-4 pb-5 pt-2 mt-auto">
                     <Button
                       onClick={handleRaiseARequirement}
-                      variant="link"
-                      size="lg"
-                      className="border  shadow-orange-500 border-orange-600 text-orange-600 rounded-[5px] transition-all duration-300 ease-in-out underline hover:bg-orange-500 hover:text-white cursor-pointer"
+                      className="w-full h-11 text-sm font-medium border border-orange-600 bg-orange-600 text-white rounded-md transition-all duration-300 hover:bg-orange-500 hover:text-white"
                     >
-                      Post a requirement
+                      Post a Requirement
                     </Button>
                   </SheetFooter>
                 </SheetContent>

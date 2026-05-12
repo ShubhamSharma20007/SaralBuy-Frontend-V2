@@ -11,7 +11,7 @@ const ApprovalPopup = ({ open, setOpen, dealId, budget, partnerName, onAction, l
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="w-4xs">
+      <DialogContent className="sm:w-4xs">
         <div className="p-3 max-w-md inline-block space-y-5">
           <div className="space-y-2 grid">
             <DialogTitle className="text-gray-800 text-3xl font-extrabold text-center">

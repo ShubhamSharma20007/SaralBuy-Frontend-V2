@@ -4,7 +4,6 @@ import { dateFormatter } from '@/utils/dateFormatter';
 import { useNavigate } from 'react-router-dom';
 import { Merge } from 'lucide-react';
 const ProductCard = ({ product: item }) => {
-  console.log(item);
   const navigate = useNavigate();
   return (
     <div className="p-5 bg-white rounded-[5px] shadow-lg ">

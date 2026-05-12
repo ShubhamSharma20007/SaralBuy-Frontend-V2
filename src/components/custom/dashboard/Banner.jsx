@@ -64,7 +64,6 @@ const Banner = () => {
   }, [data]);
   useEffect(() => {
     let interval = null;
-    console.log(banners.length);
     if (banners.length > 0) {
       interval = setInterval(() => {
         setCurrentIndex(prevIndex => (prevIndex + 1) % banners.length);

@@ -24,7 +24,7 @@ const RatingPopup = ({ open, setOpen, chatId, onSubmit, loading }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="w-4xs">
+      <DialogContent className="sm:w-4xs">
         <form className="p-3 max-w-md inline-block space-y-5 " onSubmit={handleSubmit}>
           <div className="space-y-2 grid">
             <DialogTitle className="text-gray-800 text-3xl font-extrabold text-center">

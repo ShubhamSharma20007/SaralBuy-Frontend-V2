@@ -78,15 +78,20 @@ const SwiperSlider = ({ title, color, target, data }) => {
                   style={{ height: '-webkit-fill-available' }}
                 >
                   {target !== 'drafts' ? (
-                    <p
+                    <div
                       className="text-sm cursor-pointer border rounded px-2 py-1 bg-gray-50"
                       onClick={() => {
                         navigate('/bid-overview/' + item?._id);
                       }}
                     >
-                      Total Quote:{' '}
+                      <div className='flex gap-1 items-center'>
+                        <span className='hidden sm:block'>
+                        Total
+                      </span>
+                       Quotes:{' '}
                       <span className="font-semibold text-orange-600">{item.totalBids}</span>
-                    </p>
+                      </div>
+                    </div>
                   ) : (
                     <p className="text-sm text-orange-500 mb-1">Dated: {item.date}</p>
                   )}

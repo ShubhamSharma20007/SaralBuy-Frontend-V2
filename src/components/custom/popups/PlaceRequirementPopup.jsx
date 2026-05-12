@@ -40,11 +40,8 @@ const PlaceRequirementPopup = ({
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent
-        style={{
-          maxWidth: '470px',
-        }}
-      >
+      {/* 470px */}
+       <DialogContent className="sm:w-4xs"> 
         <DialogHeader>
           <DialogTitle className="text-black text-3xl font-extrabold">
             Place Requirement

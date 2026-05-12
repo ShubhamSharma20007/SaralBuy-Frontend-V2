@@ -25,7 +25,7 @@ const SellerVerificationPopup = ({
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-4xs">
+        <DialogContent className="sm:w-4xs">
           <form
             onSubmit={e => {
               e.preventDefault();

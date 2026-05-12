@@ -164,7 +164,7 @@ const CategoryForm = ({
               src={`/image/FormImages/${innerFormImages[currentCategoryName]}`}
               alt="Category illustration"
               loading="lazy"
-              className="m-auto w-full"
+              className="m-auto w-3/4 sm:w-full"
             />
           </div>
         </div>
@@ -870,7 +870,6 @@ const CreateProductForm = () => {
           subCategroies={subCategroies}
           subCategoriesData={subCategoriesData}
           subCategoryId={subCategoryId}
-          // ✅ pass form methods down — no onFormDataChange needed
           register={register}
           watch={watch}
           setValue={setValue}
