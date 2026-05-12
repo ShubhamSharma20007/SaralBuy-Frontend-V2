@@ -41,7 +41,7 @@ const PlaceRequirementPopup = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {/* 470px */}
-       <DialogContent className="sm:w-4xs"> 
+      <DialogContent className="sm:w-4xs">
         <DialogHeader>
           <DialogTitle className="text-black text-3xl font-extrabold">
             Place Requirement

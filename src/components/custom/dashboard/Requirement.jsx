@@ -122,7 +122,7 @@ import { useCategory, useCategoryState } from '@/redux/hooks/useCategory';
 const Requirement = () => {
   const disptachCategories = useCategory();
   const { categories: data } = useCategoryState();
-  console.log(data)
+  console.log(data);
   const [currentWinSize, setCurrentWinSize] = useState();
   const navigate = useNavigate();
   useEffect(() => {
@@ -148,39 +148,37 @@ const Requirement = () => {
         </div>
       ) : (
         <Accordion type="single" collapsible className="w-full">
-  {data &&
-    data?.map(item => (
-      <AccordionItem value={item?._id} key={item._id}>
-        <AccordionTrigger className="capitalize">
-          <div className="flex items-center gap-x-4">
-            <img
-              src={item?.image}
-              alt={item?.categoryName}
-              className="w-14 h-14 object-cover rounded-md"
-            />
+          {data &&
+            data?.map(item => (
+              <AccordionItem value={item?._id} key={item._id}>
+                <AccordionTrigger className="capitalize">
+                  <div className="flex items-center gap-x-4">
+                    <img
+                      src={item?.image}
+                      alt={item?.categoryName}
+                      className="w-14 h-14 object-cover rounded-md"
+                    />
 
-            <p className="text-sm font-medium capitalize">
-              {item?.categoryName}
-            </p>
-          </div>
-        </AccordionTrigger>
+                    <p className="text-sm font-medium capitalize">{item?.categoryName}</p>
+                  </div>
+                </AccordionTrigger>
 
-        <AccordionContent className="flex flex-col gap-1 pl-4">
-          {item?.subCategories?.map(sub => (
-            <p
-              onClick={() => {
-                navigate(`/category/${item?._id}/${sub._id}`);
-              }}
-              key={sub?._id}
-              className="capitalize underline text-orange-500 text-sm cursor-pointer"
-            >
-              {sub?.name}
-            </p>
-          ))}
-        </AccordionContent>
-      </AccordionItem>
-    ))}
-</Accordion>
+                <AccordionContent className="flex flex-col gap-1 pl-4">
+                  {item?.subCategories?.map(sub => (
+                    <p
+                      onClick={() => {
+                        navigate(`/category/${item?._id}/${sub._id}`);
+                      }}
+                      key={sub?._id}
+                      className="capitalize underline text-orange-500 text-sm cursor-pointer"
+                    >
+                      {sub?.name}
+                    </p>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+        </Accordion>
       )}
       {/* looking for div */}
       <div className="bg-orange-50 p-7 rounded-[5px] my-6">

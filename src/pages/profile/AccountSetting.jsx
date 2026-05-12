@@ -30,11 +30,7 @@ export function AccountSettings() {
     loading,
   } = useFetch(userService.updateProfile);
 
-  const {
-    fn: logoutFn,
-    data: logoutRes,
-    loading: logoutLoading,
-  } = useFetch(userService.logout);
+  const { fn: logoutFn, data: logoutRes, loading: logoutLoading } = useFetch(userService.logout);
 
   const {
     handleSubmit,
@@ -121,13 +117,7 @@ export function AccountSettings() {
   }, [updateProfileRes]);
 
   useEffect(() => {
-    if (
-      !user?.firstName &&
-      !user?.phone &&
-      !user?.lastName &&
-      !user?.email &&
-      !user?.address
-    ) {
+    if (!user?.firstName && !user?.phone && !user?.lastName && !user?.email && !user?.address) {
       return;
     }
 
@@ -141,9 +131,7 @@ export function AccountSettings() {
     <div className="space-y-4 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 font-semibold w-full mb-3">
-        <p className="font-bold text-lg sm:text-xl tracking-tight text-gray-600">
-          Profile Details
-        </p>
+        <p className="font-bold text-lg sm:text-xl tracking-tight text-gray-600">Profile Details</p>
       </div>
 
       <Authentication setOpen={setOpen} open={open} />
@@ -161,10 +149,7 @@ export function AccountSettings() {
             {/* First + Last Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 w-full">
-                <Label
-                  className="text-gray-600 gap-0 text-sm"
-                  htmlFor="first-name"
-                >
+                <Label className="text-gray-600 gap-0 text-sm" htmlFor="first-name">
                   First Name
                   <span className="text-red-500">*</span>
                 </Label>
@@ -178,10 +163,7 @@ export function AccountSettings() {
               </div>
 
               <div className="space-y-2 w-full">
-                <Label
-                  className="text-gray-600 gap-0 text-sm"
-                  htmlFor="last-name"
-                >
+                <Label className="text-gray-600 gap-0 text-sm" htmlFor="last-name">
                   Last Name
                   <span className="text-red-500">*</span>
                 </Label>
@@ -217,10 +199,7 @@ export function AccountSettings() {
             {/* Email + Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 w-full">
-                <Label
-                  className="text-gray-600 gap-0 text-sm"
-                  htmlFor="email"
-                >
+                <Label className="text-gray-600 gap-0 text-sm" htmlFor="email">
                   Email
                   <span className="text-red-500">*</span>
                 </Label>
@@ -245,10 +224,7 @@ export function AccountSettings() {
               </div>
 
               <div className="space-y-2 cursor-not-allowed w-full">
-                <Label
-                  className="text-gray-600 gap-0 text-sm"
-                  htmlFor="phone"
-                >
+                <Label className="text-gray-600 gap-0 text-sm" htmlFor="phone">
                   Phone
                   <span className="text-red-500">*</span>
                 </Label>
@@ -266,10 +242,7 @@ export function AccountSettings() {
 
             {/* Address */}
             <div className="space-y-2 w-full">
-              <Label
-                className="text-gray-600 gap-0 text-sm"
-                htmlFor="address"
-              >
+              <Label className="text-gray-600 gap-0 text-sm" htmlFor="address">
                 Address
                 <span className="text-red-500">*</span>
               </Label>
@@ -296,11 +269,7 @@ export function AccountSettings() {
                 onClick={() => logoutFn()}
                 type="button"
               >
-                {logoutLoading ? (
-                  <Spinner className="w-5 h-5 animate-spin" />
-                ) : (
-                  'Log out'
-                )}
+                {logoutLoading ? <Spinner className="w-5 h-5 animate-spin" /> : 'Log out'}
               </Button>
             ) : (
               <Button
@@ -318,11 +287,7 @@ export function AccountSettings() {
               className="cursor-pointer w-full sm:w-32 bc text-sm"
               disabled={loading}
             >
-              {loading ? (
-                <Spinner className="w-5 h-5 animate-spin" />
-              ) : (
-                'Save Profile'
-              )}
+              {loading ? <Spinner className="w-5 h-5 animate-spin" /> : 'Save Profile'}
             </Button>
           </div>
         </form>

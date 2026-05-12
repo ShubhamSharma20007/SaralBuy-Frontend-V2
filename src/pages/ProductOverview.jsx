@@ -185,21 +185,13 @@ const SellerForm = ({
 
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="manufacturer">
-                      Manufacturer
-                    </SelectItem>
+                    <SelectItem value="manufacturer">Manufacturer</SelectItem>
 
-                    <SelectItem value="trader_wholesaler">
-                      Trader / Wholesaler
-                    </SelectItem>
+                    <SelectItem value="trader_wholesaler">Trader / Wholesaler</SelectItem>
 
-                    <SelectItem value="distributor">
-                      Distributor
-                    </SelectItem>
+                    <SelectItem value="distributor">Distributor</SelectItem>
 
-                    <SelectItem value="service_provider">
-                      Service Provider
-                    </SelectItem>
+                    <SelectItem value="service_provider">Service Provider</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -263,17 +255,11 @@ const SellerForm = ({
 
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="inclusive_gst">
-                      Inclusive of GST
-                    </SelectItem>
+                    <SelectItem value="inclusive_gst">Inclusive of GST</SelectItem>
 
-                    <SelectItem value="exclusive_gst">
-                      Exclusive of GST
-                    </SelectItem>
+                    <SelectItem value="exclusive_gst">Exclusive of GST</SelectItem>
 
-                    <SelectItem value="gst_rate">
-                      GST Rate (%)
-                    </SelectItem>
+                    <SelectItem value="gst_rate">GST Rate (%)</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -297,9 +283,7 @@ const SellerForm = ({
 
         {/* Delivery Timeline */}
         <div className="w-full">
-          <Label className="mb-2 text-sm block">
-            Delivery Timeline
-          </Label>
+          <Label className="mb-2 text-sm block">Delivery Timeline</Label>
 
           <Controller
             control={control}
@@ -333,9 +317,7 @@ const SellerForm = ({
                   <SelectGroup>
                     <SelectItem value="ex_works">Ex-Works</SelectItem>
                     <SelectItem value="fob">FOB</SelectItem>
-                    <SelectItem value="delivered">
-                      Delivered (DAP / DDP)
-                    </SelectItem>
+                    <SelectItem value="delivered">Delivered (DAP / DDP)</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -360,17 +342,11 @@ const SellerForm = ({
                   <SelectGroup>
                     <SelectItem value="advance">Advance</SelectItem>
 
-                    <SelectItem value="partial_advance">
-                      Partial Advance
-                    </SelectItem>
+                    <SelectItem value="partial_advance">Partial Advance</SelectItem>
 
-                    <SelectItem value="on_delivery">
-                      On Delivery
-                    </SelectItem>
+                    <SelectItem value="on_delivery">On Delivery</SelectItem>
 
-                    <SelectItem value="credit">
-                      Credit (X days)
-                    </SelectItem>
+                    <SelectItem value="credit">Credit (X days)</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -398,8 +374,7 @@ const SellerForm = ({
           <Button
             type="submit"
             disabled={
-              productResponse?.mainProduct?.userId?._id ===
-                userProfile?._id ||
+              productResponse?.mainProduct?.userId?._id === userProfile?._id ||
               createBidLoading ||
               soldProduct
             }
@@ -415,11 +390,7 @@ const SellerForm = ({
             variant={'ghost'}
             className="w-full sm:w-32 h-11 border shadow-orange-500 border-orange-500 bg-orange-600 transition-all ease-in-out duration-300 hover:bg-orange-500 text-white hover:text-white cursor-pointer"
           >
-            {updateUserBidDetsLoading ? (
-              <Spinner className="w-5 h-5 animate-spin" />
-            ) : (
-              'Update Bid'
-            )}
+            {updateUserBidDetsLoading ? <Spinner className="w-5 h-5 animate-spin" /> : 'Update Bid'}
           </Button>
         )}
       </div>
@@ -674,7 +645,6 @@ const ProductOverview = () => {
 
   useEffect(() => {
     if (error === 'invalid product ID') {
-     
     }
   }, []);
 
@@ -817,30 +787,27 @@ const ProductOverview = () => {
                         ? bidOverviewRes?.product?.createdAt
                         : productResponse?.mainProduct?.createdAt
                     )}
-                    
-                     {/* product Rating */}
-                  {soldProduct ? (
-                    ''
-                  ) : (productViewLoading || bidOverLoading) && !timeLeft ? (
-                    <Skeleton className="h-8 w-24 rounded-full float-end" />
-                  ) : timeLeft !== 'Expired' ? (
-                    <Button
-                      variant="ghost"
-                      className="float-end border rounded-full hover:bg-orange-700 hover:text-white text-sm bg-orange-700 text-white"
-                    >
-                      {timeLeft}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      className="float-end border rounded-full hover:bg-orange-700 hover:text-white text-sm bg-orange-700 text-white"
-                    >
-                      Expired
-                    </Button>
-                  )}
+                    {/* product Rating */}
+                    {soldProduct ? (
+                      ''
+                    ) : (productViewLoading || bidOverLoading) && !timeLeft ? (
+                      <Skeleton className="h-8 w-24 rounded-full float-end" />
+                    ) : timeLeft !== 'Expired' ? (
+                      <Button
+                        variant="ghost"
+                        className="float-end border rounded-full hover:bg-orange-700 hover:text-white text-sm bg-orange-700 text-white"
+                      >
+                        {timeLeft}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className="float-end border rounded-full hover:bg-orange-700 hover:text-white text-sm bg-orange-700 text-white"
+                      >
+                        Expired
+                      </Button>
+                    )}
                   </h2>
-
-                 
                 </div>
 
                 <h2 className="text-xl font-bold capitalize">
@@ -915,20 +882,20 @@ const ProductOverview = () => {
                 </div>
 
                 {soldProduct && dealSellerRating > 0 && (
-                      <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <Star
-                            key={star}
-                            className={`w-5 h-5 ${
-                              star <= dealSellerRating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'fill-gray-200 text-gray-200'
-                            }`}
-                          />
-                        ))}
-                        {/* <span className="text-xs text-gray-500 ml-1">{dealSellerRating}/5</span> */}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${
+                          star <= dealSellerRating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'fill-gray-200 text-gray-200'
+                        }`}
+                      />
+                    ))}
+                    {/* <span className="text-xs text-gray-500 ml-1">{dealSellerRating}/5</span> */}
+                  </div>
+                )}
 
                 {/* Buttons */}
                 {!isMergeQuote && (

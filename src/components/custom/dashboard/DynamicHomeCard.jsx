@@ -24,7 +24,7 @@ const DyanmicHomeCard = ({ bg, item }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-5 max-w-7xl mx-auto sm:px-4">
         {item?.products?.map(item => (
           <div
-          key={item?._id}
+            key={item?._id}
             className={`p-5 ${bg ? 'bg-white' : 'bg-orange-50'} rounded-[5px] shadow-none outline-none border-none`}
           >
             <div className="flex justify-between items-center">

@@ -84,12 +84,10 @@ const SwiperSlider = ({ title, color, target, data }) => {
                         navigate('/bid-overview/' + item?._id);
                       }}
                     >
-                      <div className='flex gap-1 items-center'>
-                        <span className='hidden sm:block'>
-                        Total
-                      </span>
-                       Quotes:{' '}
-                      <span className="font-semibold text-orange-600">{item.totalBids}</span>
+                      <div className="flex gap-1 items-center">
+                        <span className="hidden sm:block">Total</span>
+                        Quotes:{' '}
+                        <span className="font-semibold text-orange-600">{item.totalBids}</span>
                       </div>
                     </div>
                   ) : (
