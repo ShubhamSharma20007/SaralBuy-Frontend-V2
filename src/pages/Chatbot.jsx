@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Send, Menu, Paperclip, Star } from 'lucide-react';
+import { Search, Send, Menu, Paperclip, Star, PanelRightIcon, PanelRightOpen } from 'lucide-react';
 // import RatingPopup from '@/components/Popup/RatingPopup';
 // import ApprovalPopup from '@/components/Popup/ApprovalPopup';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import BudgetInputDialog from '@/components/custom/popups/BudgetInputDialog';
 import { toast } from 'sonner';
 import RatingPopup from '@/components/custom/popups/RatingPopup';
 import Loader from '@/components/custom/Loader';
+import TooltipComp from '@/lib/TooltipComp';
 
 // ─────────────────────────────────────────────
 // ContactsList — sidebar list of recent chats
@@ -1067,7 +1068,7 @@ const Chatbot = () => {
         <Loader />
       ) : (
         <div className="w-full max-w-7xl mx-auto px-4 mb-5">
-          <div className="h-[calc(100vh-100px)] border-chat-border rounded-lg overflow-hidden mt-5">
+          <div className="h-[calc(100vh-100px)] border-chat-border rounded-lg overflow-hidden sm:mt-5">
             <div className="flex h-full gap-2">
               {/* Sidebar */}
               <div className="hidden md:block w-80 bg-gray-100 border-1 rounded-md">
@@ -1090,12 +1091,14 @@ const Chatbot = () => {
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Mobile header */}
                 <div className="md:hidden py-2 border-chat-border bg-chat-sidebar">
-                  <div className="flex items-center justify-between px-4">
-                    <h2 className="text-lg font-semibold text-foreground">Messages</h2>
+                  <div className="flex items-center gap-x-2">
                     <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                       <SheetTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <Menu className="h-5 w-5" />
+                        <Button variant="ghost" size="md">
+                          <TooltipComp
+                            hoverChildren={<PanelRightOpen className="h-8 w-8" />}
+                            contentChildren={<p>Remove Doc</p>}
+                          />
                         </Button>
                       </SheetTrigger>
                       <SheetContent side="left" className="p-0 w-80">
@@ -1110,6 +1113,7 @@ const Chatbot = () => {
                         />
                       </SheetContent>
                     </Sheet>
+                    <h2 className="text-md sm:text-lg font-semibold text-foreground">Messages</h2>
                   </div>
                 </div>
 

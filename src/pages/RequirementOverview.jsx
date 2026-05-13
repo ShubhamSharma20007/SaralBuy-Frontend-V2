@@ -1,3 +1,6 @@
+// Responsive-only improvements applied
+// Functionality unchanged
+
 import TableListing from '@/components/custom/TableListing';
 import {
   Breadcrumb,
@@ -15,11 +18,13 @@ import requirementService from '@/services/requirement.service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CategoryFormSkeleton } from '@/const/CustomSkeletons';
 import { currencyConvertor } from '@/utils/currencyConvertor';
+
 const RequirementOverview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { requirementId } = useParams();
   const productData = location.state?.products;
+
   const [currentProduct, setCurrentProduct] = useState(null);
   const [bidData, setBidData] = useState([]);
   const [iterateData, setIterateData] = useState([]);
@@ -27,6 +32,7 @@ const RequirementOverview = () => {
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState('');
   const [isSoldProduct, setIsSoldProduct] = useState(false);
+
   let intervalRef = useRef(null);
 
   useEffect(() => {
@@ -48,7 +54,6 @@ const RequirementOverview = () => {
 
   useEffect(() => {
     if (requirementData) {
-      // Use fetched data if available, otherwise fall back to location state
       const dataToUse =
         requirementData || (productData && productData.length > 0 ? productData[0] : null) || null;
 
@@ -58,13 +63,11 @@ const RequirementOverview = () => {
       if (dataToUse) {
         setCurrentProduct(dataToUse);
 
-        // Create array with main product and subProducts
         if (dataToUse.product) {
           const allProducts = [dataToUse.product, ...(dataToUse.product.subProducts || [])];
           setIterateData(allProducts);
         }
 
-        // Transform sellers data into bid table format
         if (dataToUse.sellers && dataToUse.sellers.length > 0) {
           const transformedBids = dataToUse.sellers.map(seller => ({
             avtar: seller.seller?.profileImage,
@@ -87,11 +90,13 @@ const RequirementOverview = () => {
             location: seller.seller?.currentLocation || seller.seller?.address,
             status: seller.seller?.status,
           }));
+
           setBidData(transformedBids);
         }
       }
     }
   }, [requirementData]);
+
   const handleChatNavigate = (sellerId, sellerName, sellerAvatar) => {
     if (currentProduct) {
       navigate('/chat?productId=' + currentProduct.product?._id, {
@@ -116,6 +121,7 @@ const RequirementOverview = () => {
       cell: ({ row }) => {
         const image = row.original.avtar;
         const name = row.original.bid_buy || 'NA';
+
         const initials = name
           .split(' ')
           .map(n => n[0])
@@ -123,14 +129,14 @@ const RequirementOverview = () => {
           .toUpperCase();
 
         return (
-          <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2">
-            <Avatar className="w-10 h-10">
+          <div className="flex -space-x-2">
+            <Avatar className="w-9 h-9 sm:w-10 sm:h-10">
               <AvatarImage
                 src={image}
                 alt={name}
                 className="rounded-full w-full h-full object-cover"
               />
-              <AvatarFallback className="bg-gray-200 rounded-full flex w-full h-full  items-center justify-center text-sm font-semibold">
+              <AvatarFallback className="bg-gray-200 rounded-full flex w-full h-full items-center justify-center text-xs sm:text-sm font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -150,27 +156,16 @@ const RequirementOverview = () => {
       accessorKey: 'bid_amount',
       header: 'Quoted Price',
     },
-    // {
-    //   accessorKey: "chat_message",
-    //   header: "Chat Message",
-    // },
     {
       accessorKey: 'location',
       header: 'Location',
     },
-    // {
-    //   accessorKey: "status",
-    //   header: "Status",
-    //   cell: ({ row }) => {
-    //     return (row.original?.status === 'active' ? <Badge className="bg-green-100 text-green-500 rounded-full capitalize px-3 w-20">Active</Badge> : <Badge className="bg-red-100 text-red-500 rounded-full px-2 w-20">Inactive</Badge>)
-    //   }
-    // },
     {
       accessorKey: 'action',
       header: 'Action',
       cell: ({ row }) => (
         <Button
-          className="text-sm cursor-pointer text-orange-600 underline"
+          className="text-xs sm:text-sm cursor-pointer text-orange-600 underline px-0"
           variant="link"
           onClick={() =>
             handleChatNavigate(row.original.sellerId, row.original.bid_buy, row.original.avtar)
@@ -187,6 +182,7 @@ const RequirementOverview = () => {
 
     const createdAt = new Date(requirementData.createdAt).getTime();
     const durationDays = Number(requirementData.product.bidActiveDuration);
+
     const expiryTime = createdAt + durationDays * 24 * 60 * 60 * 1000;
 
     const updateTimer = () => {
@@ -195,18 +191,20 @@ const RequirementOverview = () => {
 
       if (diff <= 0) {
         setTimeLeft('Expired');
+
         if (intervalRef.current) clearInterval(intervalRef.current);
+
         return;
       }
 
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
       setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     };
 
-    // Initial call
     if (!isSoldProduct) {
       updateTimer();
       intervalRef.current = setInterval(updateTimer, 1000);
@@ -223,87 +221,114 @@ const RequirementOverview = () => {
 
   if (!currentProduct) {
     return (
-      <div className="w-full max-w-7xl mx-auto space-y-6 p-4">
-        <div className="text-center">No product data available</div>
+      <div className="w-full max-w-7xl mx-auto px-4 py-10">
+        <div className="text-center text-sm sm:text-base">No product data available</div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-3 p-4">
-      <Breadcrumb className="sm:block hidden">
+    <div className="w-full max-w-7xl mx-auto space-y-4 px-3 sm:px-4 lg:px-6 py-4">
+      {/* Breadcrumb */}
+      <Breadcrumb className="hidden sm:block">
         <BreadcrumbList>
           <BreadcrumbItem
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => navigate(-1)}
           >
             <MoveLeft className="h-4 w-4" />
-            <BreadcrumbPage className="capitalize font-semibold text-gray-500 text-[15px]">
+
+            <BreadcrumbPage className="capitalize font-semibold text-gray-500 text-sm sm:text-[15px]">
               Requirement Detail's
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Display all products (main + sub-products) */}
+      {/* Mobile Back Button */}
+      <div className="sm:hidden">
+        <Button
+          variant="ghost"
+          className="p-0 h-auto flex items-center gap-2"
+          onClick={() => navigate(-1)}
+        >
+          <MoveLeft className="h-4 w-4" />
+          <span className="text-sm font-medium">Requirement Detail's</span>
+        </Button>
+      </div>
+
+      {/* Product Cards */}
       {iterateData.map((item, idx) => (
-        <div key={idx} className="grid grid-cols-1 lg:grid-cols-12 gap-6  p-4">
+        <div
+          key={idx}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 bg-white rounded-xl border p-3 sm:p-4"
+        >
           {/* Image */}
-          <div className="lg:col-span-4 relative bg-gray-100 flex justify-center items-center rounded-lg p-4 h-48">
-            <img
-              src={item.image || '/no-image.webp'}
-              alt={item.title || 'Product'}
-              className="object-contain h-full w-full rounded-lg mix-blend-darken"
-            />
-            {isSoldProduct && (
-              <img src="/sold.png" alt="Sold" className="absolute top-[-34px] right-[-20px] w-28" />
-            )}
+          <div className="lg:col-span-4">
+            <div className="relative bg-gray-100 flex justify-center items-center rounded-lg p-4 h-52 sm:h-64 lg:h-56 overflow-hidden">
+              <img
+                src={item.image || '/no-image.webp'}
+                alt={item.title || 'Product'}
+                className="object-contain h-full w-full rounded-lg mix-blend-darken"
+              />
+
+              {isSoldProduct && (
+                <img
+                  src="/sold.png"
+                  alt="Sold"
+                  className="absolute top-0 right-0 w-20 sm:w-24 lg:w-28"
+                />
+              )}
+            </div>
           </div>
 
-          {/* Product Info */}
-          <div className="lg:col-span-8 p-4 space-y-2">
-            <h2 className="text-sm font-medium mb-2">
-              Date: {dateFormatter(item.createdAt) || 'N/A'}
+          <div className="lg:col-span-8 space-y-3">
+            {/* Top section */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <h2 className="text-xs sm:text-sm font-medium text-gray-600">
+                Date: {dateFormatter(item.createdAt) || 'N/A'}
+              </h2>
+
+              <div className="self-start sm:self-auto">
+                {loading || !timeLeft ? (
+                  <Skeleton className="h-8 w-24 rounded-full" />
+                ) : isSoldProduct ? (
+                  ''
+                ) : (
+                  <Button
+                    variant="ghost"
+                    className="border rounded-full hover:bg-orange-700 hover:text-white text-xs sm:text-sm bg-orange-700 text-white"
+                  >
+                    {timeLeft !== 'Expired' ? timeLeft : 'Expired'}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold capitalize break-words">
+              {item.title || 'N/A'}
             </h2>
-            {loading || !timeLeft ? (
-              <Skeleton className="h-8 w-24 rounded-full float-end" />
-            ) : isSoldProduct ? (
-              ''
-            ) : timeLeft !== 'Expired' ? (
-              <Button
-                variant="ghost"
-                className="float-end border rounded-full hover:bg-orange-700 hover:text-white text-sm bg-orange-700 text-white"
-              >
-                {timeLeft}
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                className="float-end border rounded-full hover:bg-orange-700 hover:text-white text-sm bg-orange-700 text-white"
-              >
-                Expired
-              </Button>
-            )}
 
-            <h2 className="text-xl font-bold capitalize">{item.title || 'N/A'}</h2>
-
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 leading-relaxed break-words">
               {item.description || 'No description available'}
             </p>
 
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-2 pr-3 border-r-2 py-1">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-5 text-sm text-gray-600">
+              <div className="flex items-center gap-2 sm:pr-4 sm:border-r-2 py-1">
                 <div className="flex gap-1 items-center">
-                  <Banknote className="w-5 h-5" />
+                  <Banknote className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="capitalize">Quantity:</span>
                 </div>
+
                 <span className="font-semibold">{item.quantity || 'N/A'}</span>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-2 py-1">
                 <div className="flex gap-1 items-center">
                   <CalendarDays className="w-4 h-4" />
                   <span className="capitalize">Delivery By:</span>
                 </div>
+
                 <span className="font-semibold">
                   {item.paymentAndDelivery?.ex_deliveryDate
                     ? dateFormatter(item.paymentAndDelivery.ex_deliveryDate)
@@ -313,15 +338,17 @@ const RequirementOverview = () => {
             </div>
 
             {item.brand && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-medium">Brand:</span>
-                <span className="text-gray-600 capitalize">{item.brand}</span>
+
+                <span className="text-gray-600 capitalize break-words">{item.brand}</span>
               </div>
             )}
 
             {item.conditionOfProduct && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-medium">Condition:</span>
+
                 <span className="text-gray-600 capitalize">
                   {item.conditionOfProduct.replace('_', ' ')}
                 </span>
@@ -331,18 +358,18 @@ const RequirementOverview = () => {
         </div>
       ))}
 
-      {/* Table Listing */}
-
-      <div className="bg-orange-50 p-4 rounded-md">
-        <TableListing
-          data={bidData}
-          columns={columns}
-          filters={false}
-          // (${bidData.length})
-          title={`Quote Recevied `}
-          target="requirementOverview"
-          colorPalette="orange"
-        />
+      {/* Table */}
+      <div className="bg-orange-50 p-2 sm:p-4 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <TableListing
+            data={bidData}
+            columns={columns}
+            filters={false}
+            title={`Quote Recevied`}
+            target="requirementOverview"
+            colorPalette="orange"
+          />
+        </div>
       </div>
     </div>
   );

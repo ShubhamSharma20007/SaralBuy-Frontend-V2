@@ -64,11 +64,11 @@ const menu = [
     url: '/account/cart',
     icon: <ShoppingCart className="w-5 h-5" />,
   },
-  // {
-  //   title: 'Messages',
-  //   url: '/chat',
-  //   icon: <MessageCircleMore className="w-5 h-5" />,
-  // },
+  {
+    title: 'Messages',
+    url: '/chat',
+    icon: <MessageCircleMore className="w-5 h-5" />,
+  },
   {
     title: 'Quotes Submitted',
     url: '/account/bid',

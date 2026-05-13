@@ -15,8 +15,8 @@ const KeenSlider = ({ product, target }) => {
       <div
         className={`w-full  border-r-2 border-gray-200 p-2 b shadow-sm  ${target === 'requirements' ? 'cursor-pointer' : ''}`}
       >
-        <div className="flex-col sm:flex-row flex gap-6 sm:pl-12 items-center">
-          <div className="w-24 h-24 flex-shrink-0">
+        <div className="flex-col sm:flex-row flex gap-6 sm:pl-12 items-center sm:mt-0 mt-2">
+          <div className="w-24 h-24 flex-shrink-0 sm:block hidden">
             <img
               src={product.image || '/no-image.webp'}
               alt={product.name}
