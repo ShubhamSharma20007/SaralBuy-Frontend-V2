@@ -5,7 +5,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../../components/ui/breadcrumb';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Camera, House } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NavLink } from 'react-router-dom';
@@ -65,6 +65,7 @@ const tags = [
 const Profile = () => {
   const { user } = useUserState();
   const { dispatchUser } = useDispatchUser();
+  const {pathname} = useLocation()
   const navigate = useNavigate();
   const {
     fn: updateProfilefn,
@@ -114,8 +115,12 @@ const Profile = () => {
               <House className="w-5 h-5" />
             </BreadcrumbPage>
             <BreadcrumbSeparator />
-            <BreadcrumbPage className="capitalize font-regular text-orange-600 font-semibold">
+            <BreadcrumbPage className="capitalize font-regular  font-semibold">
               Account
+            </BreadcrumbPage>
+             <BreadcrumbSeparator />
+            <BreadcrumbPage className="capitalize font-regular text-orange-600 font-semibold">
+              {pathname.split('/')[2] || 'Profile'}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
