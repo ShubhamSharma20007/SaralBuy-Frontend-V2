@@ -890,6 +890,30 @@ const UpdateCreateProductForm = () => {
     return true;
   };
 
+
+  useEffect(()=>{
+ if (
+      !user?.firstName?.trim() ||
+      !user?.lastName?.trim() ||
+      !user?.email?.trim() ||
+      !user?.phone?.trim()
+    ) {
+      toast.info('Please update your profile first before adding quotes',{
+        duration:2000,
+        onDismiss:()=>{
+          navigate('/account');
+        },
+        onAutoClose:()=>{
+          navigate('/account');
+        }
+      });
+
+  
+      return;
+    }
+  },[user])
+
+  
   // ── Submit — same pattern as CreateProductForm ────────────────────────────
   const handleSubmit = async (isDraft, resolvedBidDuration) => {
     if (!user) {

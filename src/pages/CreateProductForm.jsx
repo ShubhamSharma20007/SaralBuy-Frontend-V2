@@ -296,6 +296,7 @@ const CategoryForm = ({
                         type="text"
                         placeholder="Color"
                         value={colorValue}
+                        className='bg-white col-span-1'
                         onChange={e => {
                           setValue('color', e.target.value);
                         }}
@@ -768,6 +769,28 @@ const CreateProductForm = () => {
     }
     return true;
   };
+
+  useEffect(()=>{
+ if (
+      !user?.firstName?.trim() ||
+      !user?.lastName?.trim() ||
+      !user?.email?.trim() ||
+      !user?.phone?.trim()
+    ) {
+      toast.info('Please update your profile first before adding quotes',{
+        duration:2000,
+        onDismiss:()=>{
+          navigate('/account');
+        },
+        onAutoClose:()=>{
+          navigate('/account');
+        }
+      });
+
+  
+      return;
+    }
+  },[user])
 
   const handleSubmit = async (isDraft, resolvedBidDuration) => {
     if (!user) {
