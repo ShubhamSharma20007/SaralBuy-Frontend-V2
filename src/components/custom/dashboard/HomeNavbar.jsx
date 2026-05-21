@@ -777,15 +777,16 @@ const HomeNavbar = () => {
                       </div>
 
                       {notifications.length > 5 && (
-                        <div className="border-t border-gray-200 p-2 bg-gray-50">
+                        <div className="border-t border-gray-200 p-2 bg-gray-50 ">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="w-full text-orange-600 hover:text-orange-700 hover:bg-orange-100 h-8"
+                            className="w-full text-orange-600 hover:text-orange-700 hover:bg-orange-100 h-8 cursor-pointer"
                             onClick={() => {
                               setShowNotificationDropdown(
                                 false
-                              ); /* navigate('/account/notification') */
+                              );
+                                navigate('/account/notification') 
                             }}
                           >
                             View All Notifications
